@@ -1,4 +1,8 @@
-const API_URL = 'https://tabela-precos.onrender.com/api';
+// Detecta automaticamente a URL da API
+const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:3002/api'
+    : `${window.location.origin}/api`;
+
 const POLLING_INTERVAL = 3000;
 
 let precos = [];
@@ -6,6 +10,8 @@ let isOnline = false;
 let marcaSelecionada = 'TODAS';
 let marcasDisponiveis = new Set();
 let lastDataHash = '';
+
+console.log('API URL configurada:', API_URL);
 
 document.addEventListener('DOMContentLoaded', () => {
     loadPrecos();
@@ -56,6 +62,7 @@ async function checkServerStatus() {
         updateConnectionStatus();
         return isOnline;
     } catch (error) { 
+        console.error('Erro ao verificar status do servidor:', error);
         isOnline = false; 
         updateConnectionStatus(); 
         return false; 
@@ -74,21 +81,32 @@ function updateConnectionStatus() {
 }
 
 async function loadPrecos() {
+    console.log('Carregando preços...');
     const serverOnline = await checkServerStatus();
+    console.log('Servidor online:', serverOnline);
+    
     try {
         if (serverOnline) {
             const response = await fetch(`${API_URL}/precos`);
-            if (!response.ok) throw new Error('Erro ao carregar preços');
+            console.log('Response status:', response.status);
+            
+            if (!response.ok) {
+                throw new Error(`Erro ${response.status}: ${response.statusText}`);
+            }
+            
             precos = await response.json();
+            console.log('Preços carregados:', precos.length);
             lastDataHash = generateHash(precos);
         } else { 
-            precos = []; 
+            precos = [];
+            console.log('Servidor offline, lista vazia');
         }
         atualizarMarcasDisponiveis();
         renderMarcasFilter();
         filterPrecos();
     } catch (error) { 
-        console.error('Erro:', error); 
+        console.error('Erro ao carregar preços:', error); 
+        showMessage('Erro ao conectar com o servidor: ' + error.message, 'error');
         precos = []; 
         filterPrecos(); 
     }
@@ -171,7 +189,7 @@ async function handleSubmit(event) {
     resetForm();
     toggleForm();
 
-    // Sincronização em segundo plano (não bloqueia a interface)
+    // Sincronização em segundo plano
     syncWithServer(formData, editId, tempId);
 }
 
@@ -179,6 +197,7 @@ async function syncWithServer(formData, editId, tempId) {
     const serverOnline = await checkServerStatus();
     if (!serverOnline) {
         console.log('Servidor offline. Sincronização pendente.');
+        showMessage('Salvo localmente (servidor offline)', 'info');
         return;
     }
 
@@ -192,14 +211,21 @@ async function syncWithServer(formData, editId, tempId) {
             method = 'POST'; 
         }
 
+        console.log(`Sincronizando: ${method} ${url}`);
+
         const response = await fetch(url, { 
             method, 
             headers: { 'Content-Type': 'application/json' }, 
             body: JSON.stringify(formData) 
         });
         
-        if (!response.ok) throw new Error(`Erro ${response.status}`);
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Erro ${response.status}: ${errorText}`);
+        }
+        
         const savedData = await response.json();
+        console.log('Dados salvos:', savedData);
 
         // Atualiza com os dados reais do servidor
         if (editId) {
@@ -222,8 +248,8 @@ async function syncWithServer(formData, editId, tempId) {
         if (!editId) {
             precos = precos.filter(p => p.id !== tempId);
             filterPrecos();
-            showMessage('Erro ao salvar no servidor', 'error');
         }
+        showMessage('Erro ao salvar no servidor: ' + error.message, 'error');
     }
 }
 
@@ -268,7 +294,6 @@ function editPreco(id) {
 async function deletePreco(id) {
     if (!confirm('Tem certeza que deseja excluir este registro?')) return;
 
-    // Delete instantâneo na interface
     const deletedPreco = precos.find(p => p.id === id);
     precos = precos.filter(p => p.id !== id);
     atualizarMarcasDisponiveis();
@@ -276,7 +301,6 @@ async function deletePreco(id) {
     filterPrecos();
     showMessage('Registro excluído!', 'success');
 
-    // Sincroniza exclusão em segundo plano
     syncDeleteWithServer(id, deletedPreco);
 }
 
@@ -294,7 +318,6 @@ async function syncDeleteWithServer(id, deletedPreco) {
         lastDataHash = generateHash(precos);
     } catch (error) {
         console.error('Erro ao sincronizar exclusão:', error);
-        // Restaura o item em caso de erro
         if (deletedPreco) {
             precos.push(deletedPreco);
             atualizarMarcasDisponiveis();
@@ -368,7 +391,7 @@ function renderPrecos(precosToRender) {
 function showMessage(message, type) {
     const messageDiv = document.getElementById('statusMessage');
     messageDiv.textContent = message;
-    messageDiv.className = `message ${type}`;
+    messageDiv.className = `status-message ${type}`;
     messageDiv.classList.remove('hidden');
     
     setTimeout(() => {
