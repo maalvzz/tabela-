@@ -26,6 +26,13 @@ function startRealtimeSync() {
     setInterval(async () => {
         if (isOnline) await checkForUpdates();
     }, POLLING_INTERVAL);
+    
+    // Atualiza os tempos relativos a cada 30 segundos
+    setInterval(() => {
+        if (precos.length > 0) {
+            filterPrecos();
+        }
+    }, 30000);
 }
 
 async function checkForUpdates() {
@@ -172,7 +179,7 @@ async function handleSubmit(event) {
 
     // Atualização instantânea na interface
     const tempId = editId || 'temp_' + Date.now();
-    const optimisticData = { ...formData, id: tempId };
+    const optimisticData = { ...formData, id: tempId, timestamp: new Date().toISOString() };
 
     if (editId) {
         const index = precos.findIndex(p => p.id === editId);
@@ -347,6 +354,27 @@ function filterPrecos() {
     renderPrecos(filtered);
 }
 
+function getTimeAgo(timestamp) {
+    if (!timestamp) return 'Sem data';
+    
+    const now = new Date();
+    const past = new Date(timestamp);
+    const diffInSeconds = Math.floor((now - past) / 1000);
+    
+    if (diffInSeconds < 60) return `${diffInSeconds}s atrás`;
+    
+    const diffInMinutes = Math.floor(diffInSeconds / 60);
+    if (diffInMinutes < 60) return `${diffInMinutes}min atrás`;
+    
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    if (diffInHours < 24) return `${diffInHours}h atrás`;
+    
+    const diffInDays = Math.floor(diffInHours / 24);
+    if (diffInDays < 7) return `${diffInDays}d atrás`;
+    
+    return past.toLocaleDateString('pt-BR');
+}
+
 function renderPrecos(precosToRender) {
     const container = document.getElementById('precosContainer');
     
@@ -364,6 +392,7 @@ function renderPrecos(precosToRender) {
                         <th>Código</th>
                         <th>Preço</th>
                         <th>Descrição</th>
+                        <th>Última alteração</th>
                         <th style="text-align: center;">Ações</th>
                     </tr>
                 </thead>
@@ -374,6 +403,7 @@ function renderPrecos(precosToRender) {
                             <td>${p.codigo}</td>
                             <td>R$ ${parseFloat(p.preco).toFixed(2)}</td>
                             <td>${p.descricao}</td>
+                            <td style="color: var(--text-secondary); font-size: 0.85rem;">${getTimeAgo(p.timestamp)}</td>
                             <td class="actions-cell" style="text-align: center;">
                                 <button onclick="editPreco('${p.id}')" class="action-btn edit">Editar</button>
                                 <button onclick="deletePreco('${p.id}')" class="action-btn delete">Excluir</button>
