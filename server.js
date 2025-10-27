@@ -1,29 +1,61 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const { createClient } = require('@supabase/supabase-js');
-require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3002;
 
-// Configuração do Supabase
+// ==========================================
+// ======== FILTRO DE IPS AUTORIZADOS ========
+// ==========================================
+const allowedIPs = ['187.36.172.217']; // Seu IP público
+
+app.use((req, res, next) => {
+  // Render envia o IP real no cabeçalho X-Forwarded-For
+  const xForwardedFor = req.headers['x-forwarded-for'];
+  const clientIP = xForwardedFor
+    ? xForwardedFor.split(',')[0].trim()
+    : req.socket.remoteAddress;
+
+  const cleanIP = clientIP.replace('::ffff:', '');
+
+  console.log('IP tentando acessar:', cleanIP);
+
+  if (!allowedIPs.includes(cleanIP)) {
+    return res.status(403).json({
+      error: 'Acesso negado',
+      message: `Seu IP (${cleanIP}) não tem permissão para acessar este serviço`,
+    });
+  }
+
+  next();
+});
+
+// ==========================================
+// ======== CONFIGURAÇÃO DO SUPABASE ========
+// ==========================================
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_ANON_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-// Middlewares
+// ==========================================
+// ======== MIDDLEWARES GERAIS ==============
+// ==========================================
 app.use(cors({
-  origin: '*', // Permite todas as origens - ajuste conforme necessário
+  origin: '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'HEAD'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
-
-// Servir arquivos estáticos da pasta public
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Rota raiz - servir o HTML
+// ==========================================
+// ======== ROTAS ============================
+// ==========================================
+
+// Rota raiz - servir o HTML principal
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
@@ -40,7 +72,7 @@ app.get('/api/precos', async (req, res) => {
       .from('precos')
       .select('*')
       .order('marca', { ascending: true });
-    
+
     if (error) throw error;
     res.json(data || []);
   } catch (error) {
@@ -57,10 +89,10 @@ app.get('/api/precos/:id', async (req, res) => {
       .select('*')
       .eq('id', req.params.id)
       .single();
-    
+
     if (error) throw error;
     if (!data) return res.status(404).json({ error: 'Preço não encontrado' });
-    
+
     res.json(data);
   } catch (error) {
     console.error('Erro ao buscar preço:', error);
@@ -72,12 +104,11 @@ app.get('/api/precos/:id', async (req, res) => {
 app.post('/api/precos', async (req, res) => {
   try {
     const { marca, codigo, preco, descricao } = req.body;
-    
-    // Validação básica
+
     if (!marca || !codigo || !preco || !descricao) {
       return res.status(400).json({ error: 'Todos os campos são obrigatórios' });
     }
-    
+
     const { data, error } = await supabase
       .from('precos')
       .insert([{
@@ -89,7 +120,7 @@ app.post('/api/precos', async (req, res) => {
       }])
       .select()
       .single();
-    
+
     if (error) throw error;
     res.status(201).json(data);
   } catch (error) {
@@ -102,12 +133,11 @@ app.post('/api/precos', async (req, res) => {
 app.put('/api/precos/:id', async (req, res) => {
   try {
     const { marca, codigo, preco, descricao } = req.body;
-    
-    // Validação básica
+
     if (!marca || !codigo || !preco || !descricao) {
       return res.status(400).json({ error: 'Todos os campos são obrigatórios' });
     }
-    
+
     const { data, error } = await supabase
       .from('precos')
       .update({
@@ -120,10 +150,10 @@ app.put('/api/precos/:id', async (req, res) => {
       .eq('id', req.params.id)
       .select()
       .single();
-    
+
     if (error) throw error;
     if (!data) return res.status(404).json({ error: 'Preço não encontrado' });
-    
+
     res.json(data);
   } catch (error) {
     console.error('Erro ao atualizar preço:', error);
@@ -138,7 +168,7 @@ app.delete('/api/precos/:id', async (req, res) => {
       .from('precos')
       .delete()
       .eq('id', req.params.id);
-    
+
     if (error) throw error;
     res.status(204).send();
   } catch (error) {
@@ -147,21 +177,27 @@ app.delete('/api/precos/:id', async (req, res) => {
   }
 });
 
-// Health check
+// ==========================================
+// ======== HEALTH CHECK ====================
+// ==========================================
 app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'ok', 
+  res.json({
+    status: 'ok',
     timestamp: new Date().toISOString(),
     supabase: supabaseUrl ? 'configured' : 'not configured'
   });
 });
 
-// Tratamento de rotas não encontradas
+// ==========================================
+// ======== ROTA 404 ========================
+// ==========================================
 app.use((req, res) => {
   res.status(404).json({ error: 'Rota não encontrada' });
 });
 
-// Iniciar servidor
+// ==========================================
+// ======== INICIAR SERVIDOR ================
+// ==========================================
 app.listen(PORT, () => {
   console.log(`==> Servidor rodando na porta ${PORT}`);
   console.log(`==> URL principal: https://tabela-precos.onrender.com`);
