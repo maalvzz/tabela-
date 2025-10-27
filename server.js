@@ -2,26 +2,47 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
 const PORT = process.env.PORT || 3002;
 
 // ==========================================
-// ======== FILTRO DE IPS AUTORIZADOS ========
+// ======== ARQUIVO DE LOG ==================
 // ==========================================
-const allowedIPs = ['187.36.172.217']; // Seu IP público
+const logFilePath = path.join(__dirname, 'acessos.log');
 
-app.use((req, res, next) => {
-  // Render envia o IP real no cabeçalho X-Forwarded-For
+function registrarAcesso(req, res, next) {
   const xForwardedFor = req.headers['x-forwarded-for'];
   const clientIP = xForwardedFor
     ? xForwardedFor.split(',')[0].trim()
     : req.socket.remoteAddress;
 
   const cleanIP = clientIP.replace('::ffff:', '');
+  const logEntry = `[${new Date().toISOString()}] IP: ${cleanIP} Rota: ${req.path}\n`;
 
-  console.log('IP tentando acessar:', cleanIP);
+  // Grava no arquivo de log
+  fs.appendFile(logFilePath, logEntry, (err) => {
+    if (err) console.error('Erro ao gravar log:', err);
+  });
+
+  next();
+}
+
+// ==========================================
+// ======== FILTRO DE IPS AUTORIZADOS ========
+// ==========================================
+const allowedIPs = ['187.36.172.217']; // Seu IP público
+
+app.use(registrarAcesso); // Middleware de log antes do filtro
+app.use((req, res, next) => {
+  const xForwardedFor = req.headers['x-forwarded-for'];
+  const clientIP = xForwardedFor
+    ? xForwardedFor.split(',')[0].trim()
+    : req.socket.remoteAddress;
+
+  const cleanIP = clientIP.replace('::ffff:', '');
 
   if (!allowedIPs.includes(cleanIP)) {
     return res.status(403).json({
@@ -54,18 +75,12 @@ app.use(express.static(path.join(__dirname, 'public')));
 // ==========================================
 // ======== ROTAS ============================
 // ==========================================
-
-// Rota raiz - servir o HTML principal
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// HEAD - Verificar status do servidor
-app.head('/api/precos', (req, res) => {
-  res.status(200).end();
-});
+app.head('/api/precos', (req, res) => res.status(200).end());
 
-// GET - Listar todos os preços
 app.get('/api/precos', async (req, res) => {
   try {
     const { data, error } = await supabase
@@ -81,7 +96,6 @@ app.get('/api/precos', async (req, res) => {
   }
 });
 
-// GET - Buscar preço por ID
 app.get('/api/precos/:id', async (req, res) => {
   try {
     const { data, error } = await supabase
@@ -100,7 +114,6 @@ app.get('/api/precos/:id', async (req, res) => {
   }
 });
 
-// POST - Criar novo preço
 app.post('/api/precos', async (req, res) => {
   try {
     const { marca, codigo, preco, descricao } = req.body;
@@ -129,7 +142,6 @@ app.post('/api/precos', async (req, res) => {
   }
 });
 
-// PUT - Atualizar preço
 app.put('/api/precos/:id', async (req, res) => {
   try {
     const { marca, codigo, preco, descricao } = req.body;
@@ -161,7 +173,6 @@ app.put('/api/precos/:id', async (req, res) => {
   }
 });
 
-// DELETE - Deletar preço
 app.delete('/api/precos/:id', async (req, res) => {
   try {
     const { error } = await supabase
