@@ -1,28 +1,40 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const { createClient } = require('@supabase/supabase-js');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3002;
 
-// ConfiguraÃ§Ã£o do Supabase
+// Configuração do Supabase
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_ANON_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 // Middlewares
-app.use(cors());
+app.use(cors({
+  origin: '*', // Permite todas as origens - ajuste conforme necessário
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'HEAD'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());
-app.use(express.static('public'));
 
-// Rota raiz
+// Servir arquivos estáticos da pasta public
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Rota raiz - servir o HTML
 app.get('/', (req, res) => {
-  res.send('API de Preços funcionando!');
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// GET - Listar todos os preÃ§os
-app.get('/precos', async (req, res) => {
+// HEAD - Verificar status do servidor
+app.head('/api/precos', (req, res) => {
+  res.status(200).end();
+});
+
+// GET - Listar todos os preços
+app.get('/api/precos', async (req, res) => {
   try {
     const { data, error } = await supabase
       .from('precos')
@@ -30,15 +42,15 @@ app.get('/precos', async (req, res) => {
       .order('marca', { ascending: true });
     
     if (error) throw error;
-    res.json(data);
+    res.json(data || []);
   } catch (error) {
     console.error('Erro ao buscar preços:', error);
     res.status(500).json({ error: error.message });
   }
 });
 
-// GET - Buscar preÃ§o por ID
-app.get('/precos/:id', async (req, res) => {
+// GET - Buscar preço por ID
+app.get('/api/precos/:id', async (req, res) => {
   try {
     const { data, error } = await supabase
       .from('precos')
@@ -56,18 +68,23 @@ app.get('/precos/:id', async (req, res) => {
   }
 });
 
-// POST - Criar novo preÃ§o
-app.post('/precos', async (req, res) => {
+// POST - Criar novo preço
+app.post('/api/precos', async (req, res) => {
   try {
     const { marca, codigo, preco, descricao } = req.body;
+    
+    // Validação básica
+    if (!marca || !codigo || !preco || !descricao) {
+      return res.status(400).json({ error: 'Todos os campos são obrigatórios' });
+    }
     
     const { data, error } = await supabase
       .from('precos')
       .insert([{
-        marca,
-        codigo,
-        preco,
-        descricao,
+        marca: marca.trim(),
+        codigo: codigo.trim(),
+        preco: parseFloat(preco),
+        descricao: descricao.trim(),
         timestamp: new Date().toISOString()
       }])
       .select()
@@ -81,18 +98,23 @@ app.post('/precos', async (req, res) => {
   }
 });
 
-// PUT - Atualizar preÃ§o
-app.put('/precos/:id', async (req, res) => {
+// PUT - Atualizar preço
+app.put('/api/precos/:id', async (req, res) => {
   try {
     const { marca, codigo, preco, descricao } = req.body;
+    
+    // Validação básica
+    if (!marca || !codigo || !preco || !descricao) {
+      return res.status(400).json({ error: 'Todos os campos são obrigatórios' });
+    }
     
     const { data, error } = await supabase
       .from('precos')
       .update({
-        marca,
-        codigo,
-        preco,
-        descricao,
+        marca: marca.trim(),
+        codigo: codigo.trim(),
+        preco: parseFloat(preco),
+        descricao: descricao.trim(),
         timestamp: new Date().toISOString()
       })
       .eq('id', req.params.id)
@@ -109,8 +131,8 @@ app.put('/precos/:id', async (req, res) => {
   }
 });
 
-// DELETE - Deletar preÃ§o
-app.delete('/precos/:id', async (req, res) => {
+// DELETE - Deletar preço
+app.delete('/api/precos/:id', async (req, res) => {
   try {
     const { error } = await supabase
       .from('precos')
@@ -125,11 +147,24 @@ app.delete('/precos/:id', async (req, res) => {
   }
 });
 
-// HEAD - Verificar status do servidor
-app.head('/precos', (req, res) => {
-  res.status(200).end();
+// Health check
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'ok', 
+    timestamp: new Date().toISOString(),
+    supabase: supabaseUrl ? 'configured' : 'not configured'
+  });
 });
 
+// Tratamento de rotas não encontradas
+app.use((req, res) => {
+  res.status(404).json({ error: 'Rota não encontrada' });
+});
+
+// Iniciar servidor
 app.listen(PORT, () => {
-  console.log(`Servidor rodando na porta ${PORT}`);
+  console.log(`==> Servidor rodando na porta ${PORT}`);
+  console.log(`==> URL principal: https://tabela-precos.onrender.com`);
+  console.log(`==> Supabase URL: ${supabaseUrl}`);
+  console.log(`==> Supabase configurado: ${supabaseUrl ? 'Sim' : 'Não'}`);
 });
