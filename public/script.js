@@ -1,4 +1,3 @@
-// Detecta automaticamente a URL da API
 const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:3002/api'
     : `${window.location.origin}/api`;
@@ -350,6 +349,13 @@ function filterPrecos() {
             p.descricao.toLowerCase().includes(searchTerm)
         );
     }
+
+    // Ordena por marca e depois por código
+    filtered.sort((a, b) => {
+        const marcaCompare = a.marca.localeCompare(b.marca);
+        if (marcaCompare !== 0) return marcaCompare;
+        return a.codigo.localeCompare(b.codigo, undefined, { numeric: true, sensitivity: 'base' });
+    });
 
     renderPrecos(filtered);
 }
