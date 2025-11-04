@@ -33,7 +33,7 @@ function registrarAcesso(req, res, next) {
 // ==========================================
 // ======== FILTRO DE IPS AUTORIZADOS ========
 // ==========================================
-const allowedIPs = ['179.181.238.65']; // Seu IP público
+const allowedIPs = ['187.36.172.217']; // Seu IP público
 
 app.use(registrarAcesso); // Middleware de log antes do filtro
 app.use((req, res, next) => {
