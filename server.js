@@ -26,14 +26,14 @@ function registrarAcesso(req, res, next) {
   fs.appendFile(logFilePath, logEntry, (err) => {
     if (err) console.error('Erro ao gravar log:', err);
   });
-
+2
   next();
 }
 
 // ==========================================
 // ======== FILTRO DE IPS AUTORIZADOS ========
 // ==========================================
-const allowedIPs = ['187.36.172.217']; // Seu IP público
+const allowedIPs = ['179.181.238.65']; // Seu IP público
 
 app.use(registrarAcesso); // Middleware de log antes do filtro
 app.use((req, res, next) => {
