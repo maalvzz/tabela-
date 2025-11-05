@@ -8,7 +8,7 @@ const API_URL = window.location.hostname === 'localhost' || window.location.host
     : `${window.location.origin}/api`;
 
 const POLLING_INTERVAL = 3000;
-const LOGIN_URL = 'https://SEU_PORTAL_LOGIN.onrender.com'; // ← Altere para o link do seu portal
+const LOGIN_URL = 'https://ir-comercio-portal-c93p.onrender.com'
 
 let precos = [];
 let isOnline = false;
