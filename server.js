@@ -20,39 +20,14 @@ function registrarAcesso(req, res, next) {
     : req.socket.remoteAddress;
 
   const cleanIP = clientIP.replace('::ffff:', '');
-  const logEntry = `[${new Date().toISOString()}] IP: ${cleanIP} Rota: ${req.path}\n`;
+  const logEntry = `[${new Date().toISOString()}] IP: ${cleanIP} Rota: ${req.path} User: ${req.query.username || 'N/A'}\n`;
 
-  // Grava no arquivo de log
   fs.appendFile(logFilePath, logEntry, (err) => {
     if (err) console.error('Erro ao gravar log:', err);
   });
-2
+
   next();
 }
-
-// ==========================================
-// ======== FILTRO DE IPS AUTORIZADOS ========
-// ==========================================
-const allowedIPs = ['187.36.172.217']; // Seu IP público
-
-app.use(registrarAcesso); // Middleware de log antes do filtro
-app.use((req, res, next) => {
-  const xForwardedFor = req.headers['x-forwarded-for'];
-  const clientIP = xForwardedFor
-    ? xForwardedFor.split(',')[0].trim()
-    : req.socket.remoteAddress;
-
-  const cleanIP = clientIP.replace('::ffff:', '');
-
-  if (!allowedIPs.includes(cleanIP)) {
-    return res.status(403).json({
-      error: 'Acesso negado',
-      message: `Seu IP (${cleanIP}) não tem permissão para acessar este serviço`,
-    });
-  }
-
-  next();
-});
 
 // ==========================================
 // ======== CONFIGURAÇÃO DO SUPABASE ========
@@ -70,6 +45,47 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
+app.use(registrarAcesso);
+
+// ==========================================
+// ======== MIDDLEWARE DE AUTENTICAÇÃO ======
+// ==========================================
+function verificarAutenticacao(req, res, next) {
+  // Permitir acesso ao index.html e arquivos estáticos
+  if (req.path === '/' || req.path.startsWith('/css') || req.path.startsWith('/js') || req.path === '/health' || req.path === '/debug') {
+    return next();
+  }
+
+  // Para rotas da API, verificar parâmetros de autenticação
+  if (req.path.startsWith('/api/')) {
+    const { sessionToken, deviceToken, userId, username } = req.query;
+    
+    // Validação básica de presença dos tokens
+    if (!sessionToken || !deviceToken || !userId) {
+      console.log('❌ Acesso negado - Tokens ausentes:', {
+        hasSession: !!sessionToken,
+        hasDevice: !!deviceToken,
+        hasUserId: !!userId,
+        path: req.path
+      });
+      return res.status(401).json({
+        error: 'Não autorizado',
+        message: 'Tokens de autenticação ausentes ou inválidos'
+      });
+    }
+
+    // Log de acesso autorizado
+    console.log('✅ Acesso autorizado:', {
+      user: username || userId,
+      path: req.path,
+      method: req.method
+    });
+  }
+
+  next();
+}
+
+app.use(verificarAutenticacao);
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ==========================================
@@ -83,15 +99,22 @@ app.head('/api/precos', (req, res) => res.status(200).end());
 
 app.get('/api/precos', async (req, res) => {
   try {
+    console.log('📥 GET /api/precos - Buscando dados...');
+    
     const { data, error } = await supabase
       .from('precos')
       .select('*')
       .order('marca', { ascending: true });
 
-    if (error) throw error;
+    if (error) {
+      console.error('❌ Erro Supabase:', error);
+      throw error;
+    }
+    
+    console.log(`✅ Retornando ${data?.length || 0} registros para ${req.query.username || 'usuário'}`);
     res.json(data || []);
   } catch (error) {
-    console.error('Erro ao buscar preços:', error);
+    console.error('❌ Erro ao buscar preços:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -135,6 +158,7 @@ app.post('/api/precos', async (req, res) => {
       .single();
 
     if (error) throw error;
+    console.log(`✅ Registro criado por ${req.query.username}:`, data.id);
     res.status(201).json(data);
   } catch (error) {
     console.error('Erro ao criar preço:', error);
@@ -166,6 +190,7 @@ app.put('/api/precos/:id', async (req, res) => {
     if (error) throw error;
     if (!data) return res.status(404).json({ error: 'Preço não encontrado' });
 
+    console.log(`✅ Registro atualizado por ${req.query.username}:`, data.id);
     res.json(data);
   } catch (error) {
     console.error('Erro ao atualizar preço:', error);
@@ -181,6 +206,7 @@ app.delete('/api/precos/:id', async (req, res) => {
       .eq('id', req.params.id);
 
     if (error) throw error;
+    console.log(`✅ Registro deletado por ${req.query.username}:`, req.params.id);
     res.status(204).send();
   } catch (error) {
     console.error('Erro ao deletar preço:', error);
@@ -200,6 +226,30 @@ app.get('/health', (req, res) => {
 });
 
 // ==========================================
+// ======== ROTA DE DEBUG ===================
+// ==========================================
+app.get('/debug', async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('precos')
+      .select('count');
+    
+    res.json({
+      supabaseConfigured: !!supabaseUrl,
+      supabaseUrl: supabaseUrl,
+      hasAnonymousKey: !!supabaseKey,
+      keyPreview: supabaseKey ? `${supabaseKey.substring(0, 20)}...` : 'não configurado',
+      databaseTest: error ? { error: error.message } : { success: true, count: data }
+    });
+  } catch (error) {
+    res.json({
+      error: error.message,
+      supabaseConfigured: !!supabaseUrl
+    });
+  }
+});
+
+// ==========================================
 // ======== ROTA 404 ========================
 // ==========================================
 app.use((req, res) => {
@@ -210,8 +260,11 @@ app.use((req, res) => {
 // ======== INICIAR SERVIDOR ================
 // ==========================================
 app.listen(PORT, () => {
-  console.log(`==> Servidor rodando na porta ${PORT}`);
-  console.log(`==> URL principal: https://tabela-precos.onrender.com`);
-  console.log(`==> Supabase URL: ${supabaseUrl}`);
-  console.log(`==> Supabase configurado: ${supabaseUrl ? 'Sim' : 'Não'}`);
+  console.log(`\n${'='.repeat(50)}`);
+  console.log(`🚀 Servidor rodando na porta ${PORT}`);
+  console.log(`🌐 URL: https://tabela-precos.onrender.com`);
+  console.log(`🔐 Autenticação: ATIVADA (via portal)`);
+  console.log(`📊 Supabase URL: ${supabaseUrl || 'NÃO CONFIGURADO'}`);
+  console.log(`🔑 Supabase Key: ${supabaseKey ? 'Configurado ✅' : 'NÃO CONFIGURADO ❌'}`);
+  console.log(`${'='.repeat(50)}\n`);
 });
