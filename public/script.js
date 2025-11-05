@@ -1,12 +1,8 @@
-// ==========================================
-// ======== CONFIGURAÇÃO SEGURA =============
-// ==========================================
 const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:3002/api'
     : `${window.location.origin}/api`;
 
 const POLLING_INTERVAL = 3000;
-const LOGIN_URL = 'https://ir-comercio-portal-c93p.onrender.com';
 
 let precos = [];
 let isOnline = false;
@@ -14,125 +10,23 @@ let marcaSelecionada = 'TODAS';
 let marcasDisponiveis = new Set();
 let lastDataHash = '';
 
-// Parâmetros de autenticação extraídos da URL
-let authParams = {
-    sessionToken: null,
-    deviceToken: null,
-    username: null,
-    userId: null,
-    ip: null
-};
+console.log('API URL configurada:', API_URL);
 
-console.log('🚀 API URL configurada:', API_URL);
-
-// ==========================================
-// ======== AUTENTICAÇÃO ====================
-// ==========================================
-function extractAuthParams() {
-    const params = new URLSearchParams(window.location.search);
-    authParams.sessionToken = params.get('sessionToken');
-    authParams.deviceToken = params.get('deviceToken');
-    authParams.username = params.get('username');
-    authParams.userId = params.get('userId');
-    authParams.ip = params.get('ip');
-    
-    console.log('🔐 Parâmetros de autenticação:', {
-        hasSession: !!authParams.sessionToken,
-        hasDevice: !!authParams.deviceToken,
-        username: authParams.username,
-        userId: authParams.userId
-    });
-}
-
-function buildAuthURL(baseUrl) {
-    const params = new URLSearchParams();
-    if (authParams.sessionToken) params.set('sessionToken', authParams.sessionToken);
-    if (authParams.deviceToken) params.set('deviceToken', authParams.deviceToken);
-    if (authParams.userId) params.set('userId', authParams.userId);
-    if (authParams.username) params.set('username', authParams.username);
-    if (authParams.ip) params.set('ip', authParams.ip);
-    
-    return `${baseUrl}?${params.toString()}`;
-}
-
-function checkAuthentication() {
-    if (!authParams.sessionToken || !authParams.deviceToken || !authParams.userId) {
-        console.error('❌ Não autenticado - faltam tokens');
-        showUnauthenticatedScreen();
-        return false;
-    }
-    console.log('✅ Autenticação verificada');
-    return true;
-}
-
-function showUnauthenticatedScreen() {
-    document.body.innerHTML = `
-        <div style="display:flex;align-items:center;justify-content:center;height:100vh;
-                    background:linear-gradient(135deg,#F5F5F5 0%,#FFFFFF 100%);font-family:sans-serif;">
-            <div style="text-align:center;padding:3rem;background:white;border-radius:16px;
-                        box-shadow:0 20px 60px rgba(0,0,0,0.1);max-width:500px;">
-                <div style="font-size:4rem;margin-bottom:1rem;">🔒</div>
-                <h2 style="color:#EF4444;margin-bottom:1rem;font-size:1.5rem;">Acesso Não Autorizado</h2>
-                <p style="color:#666;margin-bottom:2rem;line-height:1.6;">
-                    Esta aplicação requer autenticação através do portal principal.
-                    <br><br>Por favor, faça login primeiro através da central de controle.
-                </p>
-                <a href="${LOGIN_URL}" 
-                   style="display:inline-block;padding:1rem 2rem;background:#FF5100;color:white;
-                          text-decoration:none;border-radius:8px;font-weight:600;
-                          transition:all 0.3s ease;box-shadow:0 4px 12px rgba(255,81,0,0.3);">
-                    Ir para o Portal de Login
-                </a>
-            </div>
-        </div>
-    `;
-}
-
-function showSessionExpired() {
-    if (confirm('Sua sessão expirou. Você será redirecionado para fazer login novamente.')) {
-        window.location.href = LOGIN_URL;
-    }
-}
-
-// ==========================================
-// ======== FUNÇÕES DE HASH =================
-// ==========================================
-function generateHash(data) { 
-    return JSON.stringify(data); 
-}
-
-// ==========================================
-// ======== INICIALIZAÇÃO ===================
-// ==========================================
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('📱 Aplicação iniciada');
-    extractAuthParams();
-    
-    if (!checkAuthentication()) {
-        console.error('❌ Bloqueio: não autenticado');
-        return;
-    }
-    
-    console.log(`✅ Usuário autenticado: ${authParams.username}`);
-    
-    // Mostrar nome do usuário na interface
-    const userNameElement = document.getElementById('currentUser');
-    if (userNameElement) {
-        userNameElement.textContent = authParams.username;
-    }
-    
     loadPrecos();
     startRealtimeSync();
 });
 
-// ==========================================
-// ======== SINCRONIZAÇÃO REAL-TIME =========
-// ==========================================
+function generateHash(data) { 
+    return JSON.stringify(data); 
+}
+
 function startRealtimeSync() {
     setInterval(async () => {
         if (isOnline) await checkForUpdates();
     }, POLLING_INTERVAL);
     
+    // Atualiza os tempos relativos a cada 30 segundos
     setInterval(() => {
         if (precos.length > 0) {
             filterPrecos();
@@ -142,28 +36,17 @@ function startRealtimeSync() {
 
 async function checkForUpdates() {
     try {
-        const url = buildAuthURL(`${API_URL}/precos`);
-        const response = await fetch(url, { 
+        const response = await fetch(`${API_URL}/precos`, { 
             cache: 'no-cache', 
             headers: { 
                 'Cache-Control': 'no-cache', 
                 'Pragma': 'no-cache' 
             } 
         });
-        
-        if (response.status === 401) {
-            console.error('❌ Sessão expirada');
-            showSessionExpired();
-            return;
-        }
-        
         if (!response.ok) return;
-        
         const serverData = await response.json();
         const newHash = generateHash(serverData);
-        
         if (newHash !== lastDataHash) {
-            console.log('🔄 Dados atualizados do servidor');
             lastDataHash = newHash;
             precos = serverData;
             atualizarMarcasDisponiveis();
@@ -171,31 +54,21 @@ async function checkForUpdates() {
             filterPrecos();
         }
     } catch (error) { 
-        console.error('❌ Erro ao verificar atualizações:', error); 
+        console.error('Erro ao verificar atualizações:', error); 
     }
 }
 
-// ==========================================
-// ======== STATUS DO SERVIDOR ==============
-// ==========================================
 async function checkServerStatus() {
     try {
-        const url = buildAuthURL(`${API_URL}/precos`);
-        const response = await fetch(url, { 
+        const response = await fetch(`${API_URL}/precos`, { 
             method: 'HEAD', 
             cache: 'no-cache' 
         });
-        
-        if (response.status === 401) {
-            showSessionExpired();
-            return false;
-        }
-        
         isOnline = response.ok;
         updateConnectionStatus();
         return isOnline;
     } catch (error) { 
-        console.error('❌ Erro ao verificar status:', error);
+        console.error('Erro ao verificar status do servidor:', error);
         isOnline = false; 
         updateConnectionStatus(); 
         return false; 
@@ -204,8 +77,6 @@ async function checkServerStatus() {
 
 function updateConnectionStatus() {
     const statusDiv = document.getElementById('connectionStatus');
-    if (!statusDiv) return;
-    
     if (isOnline) {
         statusDiv.className = 'connection-status online';
         statusDiv.querySelector('span:last-child').textContent = 'Online';
@@ -215,56 +86,43 @@ function updateConnectionStatus() {
     }
 }
 
-// ==========================================
-// ======== CARREGAR PREÇOS =================
-// ==========================================
 async function loadPrecos() {
-    console.log('📥 Carregando preços...');
+    console.log('Carregando preços...');
     const serverOnline = await checkServerStatus();
-    console.log(`🌐 Servidor: ${serverOnline ? 'Online ✅' : 'Offline ❌'}`);
+    console.log('Servidor online:', serverOnline);
     
     try {
         if (serverOnline) {
-            const url = buildAuthURL(`${API_URL}/precos`);
-            const response = await fetch(url);
-            console.log(`📡 Response status: ${response.status}`);
-            
-            if (response.status === 401) {
-                showSessionExpired();
-                return;
-            }
+            const response = await fetch(`${API_URL}/precos`);
+            console.log('Response status:', response.status);
             
             if (!response.ok) {
                 throw new Error(`Erro ${response.status}: ${response.statusText}`);
             }
             
             precos = await response.json();
-            console.log(`✅ ${precos.length} registros carregados`);
+            console.log('Preços carregados:', precos.length);
             lastDataHash = generateHash(precos);
         } else { 
             precos = [];
-            console.log('⚠️ Servidor offline - lista vazia');
+            console.log('Servidor offline, lista vazia');
         }
         atualizarMarcasDisponiveis();
         renderMarcasFilter();
         filterPrecos();
     } catch (error) { 
-        console.error('❌ Erro ao carregar preços:', error); 
-        showMessage('Erro ao conectar: ' + error.message, 'error');
+        console.error('Erro ao carregar preços:', error); 
+        showMessage('Erro ao conectar com o servidor: ' + error.message, 'error');
         precos = []; 
         filterPrecos(); 
     }
 }
 
-// ==========================================
-// ======== MARCAS ==========================
-// ==========================================
 function atualizarMarcasDisponiveis() {
     marcasDisponiveis.clear();
     precos.forEach(p => { 
         if (p.marca && p.marca.trim()) marcasDisponiveis.add(p.marca.trim()); 
     });
-    console.log(`🏷️ Marcas disponíveis: ${marcasDisponiveis.size}`);
 }
 
 function renderMarcasFilter() {
@@ -293,9 +151,6 @@ function selecionarMarca(marca) {
     filterPrecos();
 }
 
-// ==========================================
-// ======== FORMULÁRIO ======================
-// ==========================================
 function getFormData() {
     return {
         marca: document.getElementById('marca').value.trim(),
@@ -321,6 +176,7 @@ async function handleSubmit(event) {
         return;
     }
 
+    // Atualização instantânea na interface
     const tempId = editId || 'temp_' + Date.now();
     const optimisticData = { ...formData, id: tempId, timestamp: new Date().toISOString() };
 
@@ -339,13 +195,14 @@ async function handleSubmit(event) {
     resetForm();
     toggleForm();
 
+    // Sincronização em segundo plano
     syncWithServer(formData, editId, tempId);
 }
 
 async function syncWithServer(formData, editId, tempId) {
     const serverOnline = await checkServerStatus();
     if (!serverOnline) {
-        console.log('⚠️ Servidor offline. Sincronização pendente.');
+        console.log('Servidor offline. Sincronização pendente.');
         showMessage('Salvo localmente (servidor offline)', 'info');
         return;
     }
@@ -353,14 +210,14 @@ async function syncWithServer(formData, editId, tempId) {
     try {
         let url, method;
         if (editId) { 
-            url = buildAuthURL(`${API_URL}/precos/${editId}`);
+            url = `${API_URL}/precos/${editId}`; 
             method = 'PUT'; 
         } else { 
-            url = buildAuthURL(`${API_URL}/precos`);
+            url = `${API_URL}/precos`; 
             method = 'POST'; 
         }
 
-        console.log(`🔄 Sincronizando: ${method}`);
+        console.log(`Sincronizando: ${method} ${url}`);
 
         const response = await fetch(url, { 
             method, 
@@ -368,19 +225,15 @@ async function syncWithServer(formData, editId, tempId) {
             body: JSON.stringify(formData) 
         });
         
-        if (response.status === 401) {
-            showSessionExpired();
-            return;
-        }
-        
         if (!response.ok) {
             const errorText = await response.text();
             throw new Error(`Erro ${response.status}: ${errorText}`);
         }
         
         const savedData = await response.json();
-        console.log('✅ Dados salvos:', savedData.id);
+        console.log('Dados salvos:', savedData);
 
+        // Atualiza com os dados reais do servidor
         if (editId) {
             const index = precos.findIndex(p => p.id === editId);
             if (index !== -1) precos[index] = savedData;
@@ -396,18 +249,16 @@ async function syncWithServer(formData, editId, tempId) {
         renderMarcasFilter();
         filterPrecos();
     } catch (error) {
-        console.error('❌ Erro ao sincronizar:', error);
+        console.error('Erro ao sincronizar:', error);
+        // Remove o registro temporário em caso de erro
         if (!editId) {
             precos = precos.filter(p => p.id !== tempId);
             filterPrecos();
         }
-        showMessage('Erro ao salvar: ' + error.message, 'error');
+        showMessage('Erro ao salvar no servidor: ' + error.message, 'error');
     }
 }
 
-// ==========================================
-// ======== CONTROLES DO FORMULÁRIO =========
-// ==========================================
 function toggleForm() {
     const formCard = document.getElementById('formCard');
     formCard.classList.toggle('hidden');
@@ -429,9 +280,6 @@ function cancelEdit() {
     toggleForm();
 }
 
-// ==========================================
-// ======== EDITAR PREÇO ====================
-// ==========================================
 function editPreco(id) {
     const preco = precos.find(p => p.id === id);
     if (!preco) return;
@@ -449,9 +297,6 @@ function editPreco(id) {
     document.getElementById('marca').focus();
 }
 
-// ==========================================
-// ======== DELETAR PREÇO ===================
-// ==========================================
 async function deletePreco(id) {
     if (!confirm('Tem certeza que deseja excluir este registro?')) return;
 
@@ -468,25 +313,17 @@ async function deletePreco(id) {
 async function syncDeleteWithServer(id, deletedPreco) {
     const serverOnline = await checkServerStatus();
     if (!serverOnline) {
-        console.log('⚠️ Servidor offline. Exclusão pendente.');
+        console.log('Servidor offline. Exclusão pendente.');
         return;
     }
 
     try {
-        const url = buildAuthURL(`${API_URL}/precos/${id}`);
-        const response = await fetch(url, { method: 'DELETE' });
-        
-        if (response.status === 401) {
-            showSessionExpired();
-            return;
-        }
-        
+        const response = await fetch(`${API_URL}/precos/${id}`, { method: 'DELETE' });
         if (!response.ok) throw new Error('Erro ao deletar');
 
-        console.log('✅ Registro deletado no servidor');
         lastDataHash = generateHash(precos);
     } catch (error) {
-        console.error('❌ Erro ao sincronizar exclusão:', error);
+        console.error('Erro ao sincronizar exclusão:', error);
         if (deletedPreco) {
             precos.push(deletedPreco);
             atualizarMarcasDisponiveis();
@@ -497,9 +334,6 @@ async function syncDeleteWithServer(id, deletedPreco) {
     }
 }
 
-// ==========================================
-// ======== FILTRAR PREÇOS ==================
-// ==========================================
 function filterPrecos() {
     const searchTerm = document.getElementById('search').value.toLowerCase();
     let filtered = precos;
@@ -516,19 +350,16 @@ function filterPrecos() {
         );
     }
 
+    // Ordena por marca e depois por código
     filtered.sort((a, b) => {
         const marcaCompare = a.marca.localeCompare(b.marca);
         if (marcaCompare !== 0) return marcaCompare;
         return a.codigo.localeCompare(b.codigo, undefined, { numeric: true, sensitivity: 'base' });
     });
 
-    console.log(`🔍 Exibindo ${filtered.length} de ${precos.length} registros`);
     renderPrecos(filtered);
 }
 
-// ==========================================
-// ======== FUNÇÕES DE TEMPO ================
-// ==========================================
 function getTimeAgo(timestamp) {
     if (!timestamp) return 'Sem data';
     
@@ -550,20 +381,11 @@ function getTimeAgo(timestamp) {
     return past.toLocaleDateString('pt-BR');
 }
 
-// ==========================================
-// ======== RENDERIZAR PREÇOS ===============
-// ==========================================
 function renderPrecos(precosToRender) {
     const container = document.getElementById('precosContainer');
     
     if (!precosToRender || precosToRender.length === 0) {
-        container.innerHTML = `
-            <div style="text-align: center; padding: 3rem; color: var(--text-secondary);">
-                <div style="font-size: 3rem; margin-bottom: 1rem;">📦</div>
-                <h3>Nenhum registro encontrado</h3>
-                <p style="margin-top: 0.5rem;">Adicione seu primeiro produto clicando em "Novo Registro"</p>
-            </div>
-        `;
+        container.innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--text-secondary);">Nenhum registro encontrado</div>';
         return;
     }
 
@@ -602,13 +424,8 @@ function renderPrecos(precosToRender) {
     container.innerHTML = table;
 }
 
-// ==========================================
-// ======== MENSAGENS =======================
-// ==========================================
 function showMessage(message, type) {
     const messageDiv = document.getElementById('statusMessage');
-    if (!messageDiv) return;
-    
     messageDiv.textContent = message;
     messageDiv.className = `status-message ${type}`;
     messageDiv.classList.remove('hidden');
