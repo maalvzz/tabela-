@@ -1,14 +1,12 @@
 // ==========================================
 // ======== CONFIGURAÇÃO SEGURA =============
 // ==========================================
-// ZERO credenciais expostas no frontend!
-
 const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:3002/api'
     : `${window.location.origin}/api`;
 
 const POLLING_INTERVAL = 3000;
-const LOGIN_URL = 'https://ir-comercio-portal-c93p.onrender.com'
+const LOGIN_URL = 'https://ir-comercio-portal-c93p.onrender.com';
 
 let precos = [];
 let isOnline = false;
@@ -25,7 +23,7 @@ let authParams = {
     ip: null
 };
 
-console.log('API URL configurada:', API_URL);
+console.log('🚀 API URL configurada:', API_URL);
 
 // ==========================================
 // ======== AUTENTICAÇÃO ====================
@@ -38,7 +36,7 @@ function extractAuthParams() {
     authParams.userId = params.get('userId');
     authParams.ip = params.get('ip');
     
-    console.log('Parâmetros de autenticação:', {
+    console.log('🔐 Parâmetros de autenticação:', {
         hasSession: !!authParams.sessionToken,
         hasDevice: !!authParams.deviceToken,
         username: authParams.username,
@@ -47,15 +45,23 @@ function extractAuthParams() {
 }
 
 function buildAuthURL(baseUrl) {
-    const params = new URLSearchParams(authParams);
+    const params = new URLSearchParams();
+    if (authParams.sessionToken) params.set('sessionToken', authParams.sessionToken);
+    if (authParams.deviceToken) params.set('deviceToken', authParams.deviceToken);
+    if (authParams.userId) params.set('userId', authParams.userId);
+    if (authParams.username) params.set('username', authParams.username);
+    if (authParams.ip) params.set('ip', authParams.ip);
+    
     return `${baseUrl}?${params.toString()}`;
 }
 
 function checkAuthentication() {
     if (!authParams.sessionToken || !authParams.deviceToken || !authParams.userId) {
+        console.error('❌ Não autenticado - faltam tokens');
         showUnauthenticatedScreen();
         return false;
     }
+    console.log('✅ Autenticação verificada');
     return true;
 }
 
@@ -69,12 +75,12 @@ function showUnauthenticatedScreen() {
                 <h2 style="color:#EF4444;margin-bottom:1rem;font-size:1.5rem;">Acesso Não Autorizado</h2>
                 <p style="color:#666;margin-bottom:2rem;line-height:1.6;">
                     Esta aplicação requer autenticação através do portal principal.
-                    <br>Por favor, faça login primeiro.
+                    <br><br>Por favor, faça login primeiro através da central de controle.
                 </p>
                 <a href="${LOGIN_URL}" 
                    style="display:inline-block;padding:1rem 2rem;background:#FF5100;color:white;
                           text-decoration:none;border-radius:8px;font-weight:600;
-                          transition:all 0.3s ease;">
+                          transition:all 0.3s ease;box-shadow:0 4px 12px rgba(255,81,0,0.3);">
                     Ir para o Portal de Login
                 </a>
             </div>
@@ -82,27 +88,11 @@ function showUnauthenticatedScreen() {
     `;
 }
 
-// ==========================================
-// ======== INICIALIZAÇÃO ===================
-// ==========================================
-document.addEventListener('DOMContentLoaded', () => {
-    extractAuthParams();
-    
-    if (!checkAuthentication()) {
-        console.error('❌ Não autenticado - redirecionando...');
-        return;
+function showSessionExpired() {
+    if (confirm('Sua sessão expirou. Você será redirecionado para fazer login novamente.')) {
+        window.location.href = LOGIN_URL;
     }
-    
-    console.log('✅ Autenticado como:', authParams.username);
-    loadPrecos();
-    startRealtimeSync();
-    
-    // Adicionar nome do usuário na interface (se houver um elemento para isso)
-    const userNameElement = document.getElementById('currentUser');
-    if (userNameElement) {
-        userNameElement.textContent = authParams.username;
-    }
-});
+}
 
 // ==========================================
 // ======== FUNÇÕES DE HASH =================
@@ -110,6 +100,30 @@ document.addEventListener('DOMContentLoaded', () => {
 function generateHash(data) { 
     return JSON.stringify(data); 
 }
+
+// ==========================================
+// ======== INICIALIZAÇÃO ===================
+// ==========================================
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('📱 Aplicação iniciada');
+    extractAuthParams();
+    
+    if (!checkAuthentication()) {
+        console.error('❌ Bloqueio: não autenticado');
+        return;
+    }
+    
+    console.log(`✅ Usuário autenticado: ${authParams.username}`);
+    
+    // Mostrar nome do usuário na interface
+    const userNameElement = document.getElementById('currentUser');
+    if (userNameElement) {
+        userNameElement.textContent = authParams.username;
+    }
+    
+    loadPrecos();
+    startRealtimeSync();
+});
 
 // ==========================================
 // ======== SINCRONIZAÇÃO REAL-TIME =========
@@ -149,6 +163,7 @@ async function checkForUpdates() {
         const newHash = generateHash(serverData);
         
         if (newHash !== lastDataHash) {
+            console.log('🔄 Dados atualizados do servidor');
             lastDataHash = newHash;
             precos = serverData;
             atualizarMarcasDisponiveis();
@@ -156,13 +171,8 @@ async function checkForUpdates() {
             filterPrecos();
         }
     } catch (error) { 
-        console.error('Erro ao verificar atualizações:', error); 
+        console.error('❌ Erro ao verificar atualizações:', error); 
     }
-}
-
-function showSessionExpired() {
-    alert('Sua sessão expirou. Você será redirecionado para fazer login novamente.');
-    window.location.href = LOGIN_URL;
 }
 
 // ==========================================
@@ -185,7 +195,7 @@ async function checkServerStatus() {
         updateConnectionStatus();
         return isOnline;
     } catch (error) { 
-        console.error('Erro ao verificar status do servidor:', error);
+        console.error('❌ Erro ao verificar status:', error);
         isOnline = false; 
         updateConnectionStatus(); 
         return false; 
@@ -209,15 +219,15 @@ function updateConnectionStatus() {
 // ======== CARREGAR PREÇOS =================
 // ==========================================
 async function loadPrecos() {
-    console.log('Carregando preços...');
+    console.log('📥 Carregando preços...');
     const serverOnline = await checkServerStatus();
-    console.log('Servidor online:', serverOnline);
+    console.log(`🌐 Servidor: ${serverOnline ? 'Online ✅' : 'Offline ❌'}`);
     
     try {
         if (serverOnline) {
             const url = buildAuthURL(`${API_URL}/precos`);
             const response = await fetch(url);
-            console.log('Response status:', response.status);
+            console.log(`📡 Response status: ${response.status}`);
             
             if (response.status === 401) {
                 showSessionExpired();
@@ -229,18 +239,18 @@ async function loadPrecos() {
             }
             
             precos = await response.json();
-            console.log('Preços carregados:', precos.length);
+            console.log(`✅ ${precos.length} registros carregados`);
             lastDataHash = generateHash(precos);
         } else { 
             precos = [];
-            console.log('Servidor offline, lista vazia');
+            console.log('⚠️ Servidor offline - lista vazia');
         }
         atualizarMarcasDisponiveis();
         renderMarcasFilter();
         filterPrecos();
     } catch (error) { 
-        console.error('Erro ao carregar preços:', error); 
-        showMessage('Erro ao conectar com o servidor: ' + error.message, 'error');
+        console.error('❌ Erro ao carregar preços:', error); 
+        showMessage('Erro ao conectar: ' + error.message, 'error');
         precos = []; 
         filterPrecos(); 
     }
@@ -254,6 +264,7 @@ function atualizarMarcasDisponiveis() {
     precos.forEach(p => { 
         if (p.marca && p.marca.trim()) marcasDisponiveis.add(p.marca.trim()); 
     });
+    console.log(`🏷️ Marcas disponíveis: ${marcasDisponiveis.size}`);
 }
 
 function renderMarcasFilter() {
@@ -334,7 +345,7 @@ async function handleSubmit(event) {
 async function syncWithServer(formData, editId, tempId) {
     const serverOnline = await checkServerStatus();
     if (!serverOnline) {
-        console.log('Servidor offline. Sincronização pendente.');
+        console.log('⚠️ Servidor offline. Sincronização pendente.');
         showMessage('Salvo localmente (servidor offline)', 'info');
         return;
     }
@@ -349,7 +360,7 @@ async function syncWithServer(formData, editId, tempId) {
             method = 'POST'; 
         }
 
-        console.log(`Sincronizando: ${method} ${url}`);
+        console.log(`🔄 Sincronizando: ${method}`);
 
         const response = await fetch(url, { 
             method, 
@@ -368,7 +379,7 @@ async function syncWithServer(formData, editId, tempId) {
         }
         
         const savedData = await response.json();
-        console.log('Dados salvos:', savedData);
+        console.log('✅ Dados salvos:', savedData.id);
 
         if (editId) {
             const index = precos.findIndex(p => p.id === editId);
@@ -385,12 +396,12 @@ async function syncWithServer(formData, editId, tempId) {
         renderMarcasFilter();
         filterPrecos();
     } catch (error) {
-        console.error('Erro ao sincronizar:', error);
+        console.error('❌ Erro ao sincronizar:', error);
         if (!editId) {
             precos = precos.filter(p => p.id !== tempId);
             filterPrecos();
         }
-        showMessage('Erro ao salvar no servidor: ' + error.message, 'error');
+        showMessage('Erro ao salvar: ' + error.message, 'error');
     }
 }
 
@@ -457,7 +468,7 @@ async function deletePreco(id) {
 async function syncDeleteWithServer(id, deletedPreco) {
     const serverOnline = await checkServerStatus();
     if (!serverOnline) {
-        console.log('Servidor offline. Exclusão pendente.');
+        console.log('⚠️ Servidor offline. Exclusão pendente.');
         return;
     }
 
@@ -472,9 +483,10 @@ async function syncDeleteWithServer(id, deletedPreco) {
         
         if (!response.ok) throw new Error('Erro ao deletar');
 
+        console.log('✅ Registro deletado no servidor');
         lastDataHash = generateHash(precos);
     } catch (error) {
-        console.error('Erro ao sincronizar exclusão:', error);
+        console.error('❌ Erro ao sincronizar exclusão:', error);
         if (deletedPreco) {
             precos.push(deletedPreco);
             atualizarMarcasDisponiveis();
@@ -510,6 +522,7 @@ function filterPrecos() {
         return a.codigo.localeCompare(b.codigo, undefined, { numeric: true, sensitivity: 'base' });
     });
 
+    console.log(`🔍 Exibindo ${filtered.length} de ${precos.length} registros`);
     renderPrecos(filtered);
 }
 
@@ -544,7 +557,13 @@ function renderPrecos(precosToRender) {
     const container = document.getElementById('precosContainer');
     
     if (!precosToRender || precosToRender.length === 0) {
-        container.innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--text-secondary);">Nenhum registro encontrado</div>';
+        container.innerHTML = `
+            <div style="text-align: center; padding: 3rem; color: var(--text-secondary);">
+                <div style="font-size: 3rem; margin-bottom: 1rem;">📦</div>
+                <h3>Nenhum registro encontrado</h3>
+                <p style="margin-top: 0.5rem;">Adicione seu primeiro produto clicando em "Novo Registro"</p>
+            </div>
+        `;
         return;
     }
 
