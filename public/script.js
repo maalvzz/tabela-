@@ -1,8 +1,8 @@
-const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    ? 'http://localhost:3002/api'
-    : `${window.location.origin}/api`;
-
-const PORTAL_URL = 'https://ir-comercio-portal-zcan.onrender.com'
+// ==========================================
+// ======== CONFIGURAÇÃO ====================
+// ==========================================
+const API_URL = 'https://tabela-precos-3yg9.onrender.com/api';
+const PORTAL_URL = 'https://ir-comercio-portal-zcan.onrender.com';
 const POLLING_INTERVAL = 3000;
 
 let precos = [];
@@ -23,14 +23,12 @@ document.addEventListener('DOMContentLoaded', () => {
 // ======== VERIFICAR AUTENTICAÇÃO ==========
 // ==========================================
 function verificarAutenticacao() {
-    // Pegar token da URL
     const urlParams = new URLSearchParams(window.location.search);
     const tokenFromUrl = urlParams.get('sessionToken');
 
     if (tokenFromUrl) {
         sessionToken = tokenFromUrl;
         sessionStorage.setItem('tabelaPrecosSession', sessionToken);
-        // Limpar URL sem recarregar a página
         window.history.replaceState({}, document.title, window.location.pathname);
     } else {
         sessionToken = sessionStorage.getItem('tabelaPrecosSession');
@@ -41,7 +39,6 @@ function verificarAutenticacao() {
         return;
     }
 
-    // Verificar se a sessão é válida
     verificarSessaoValida();
 }
 
@@ -61,7 +58,6 @@ async function verificarSessaoValida() {
             return;
         }
 
-        // Sessão válida - carregar aplicação
         iniciarAplicacao();
     } catch (error) {
         console.error('Erro ao verificar sessão:', error);
@@ -76,14 +72,13 @@ function iniciarAplicacao() {
 }
 
 // ==========================================
-// ======== VERIFICAÇÃO PERIÓDICA DE SESSÃO =
+// ======== VERIFICAÇÃO PERIÓDICA ===========
 // ==========================================
 function startSessionCheck() {
     if (sessionCheckInterval) {
         clearInterval(sessionCheckInterval);
     }
 
-    // Verificar a cada 30 segundos
     sessionCheckInterval = setInterval(async () => {
         try {
             const response = await fetch(`${PORTAL_URL}/api/verify-session`, {
@@ -180,6 +175,7 @@ async function checkForUpdates() {
 
 async function checkServerStatus() {
     try {
+        // CORREÇÃO: Usar a URL correta do API
         const response = await fetch(`${API_URL}/precos`, { 
             method: 'HEAD', 
             cache: 'no-cache',
@@ -188,6 +184,7 @@ async function checkServerStatus() {
             }
         });
         isOnline = response.ok;
+        console.log('Status do servidor:', isOnline ? 'ONLINE' : 'OFFLINE');
         updateConnectionStatus();
         return isOnline;
     } catch (error) { 
@@ -212,18 +209,19 @@ function updateConnectionStatus() {
 }
 
 async function loadPrecos() {
-    console.log('Carregando preços...');
+    console.log('🔄 Carregando preços...');
     const serverOnline = await checkServerStatus();
-    console.log('Servidor online:', serverOnline);
+    console.log('📡 Servidor online:', serverOnline);
     
     try {
         if (serverOnline) {
+            console.log('🌐 Fazendo requisição para:', `${API_URL}/precos`);
             const response = await fetch(`${API_URL}/precos`, {
                 headers: {
                     'X-Session-Token': sessionToken
                 }
             });
-            console.log('Response status:', response.status);
+            console.log('📊 Response status:', response.status);
             
             if (response.status === 401) {
                 sessionStorage.removeItem('tabelaPrecosSession');
@@ -236,17 +234,17 @@ async function loadPrecos() {
             }
             
             precos = await response.json();
-            console.log('Preços carregados:', precos.length);
+            console.log('✅ Preços carregados:', precos.length, 'registros');
             lastDataHash = generateHash(precos);
         } else { 
             precos = [];
-            console.log('Servidor offline, lista vazia');
+            console.log('⚠️ Servidor offline, lista vazia');
         }
         atualizarMarcasDisponiveis();
         renderMarcasFilter();
         filterPrecos();
     } catch (error) { 
-        console.error('Erro ao carregar preços:', error); 
+        console.error('❌ Erro ao carregar preços:', error); 
         showMessage('Erro ao conectar com o servidor: ' + error.message, 'error');
         precos = []; 
         filterPrecos(); 
