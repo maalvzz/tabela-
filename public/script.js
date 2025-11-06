@@ -37,7 +37,7 @@ function verificarAutenticacao() {
     }
 
     if (!sessionToken) {
-        mostrarTelaAcessoNegado();
+        mostrarTelaAcessoNegado('Token de sessão não encontrado');
         return;
     }
 
@@ -47,17 +47,20 @@ function verificarAutenticacao() {
 
 async function verificarSessaoValida() {
     try {
-        const response = await fetch(`${PORTAL_URL}/api/verify-session`, {
+        // MUDANÇA: Agora verifica direto na própria API em vez do portal
+        const response = await fetch(`${API_URL}/verify-session`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ sessionToken })
+            headers: { 
+                'Content-Type': 'application/json',
+                'X-Session-Token': sessionToken
+            }
         });
 
         const data = await response.json();
 
         if (!data.valid) {
             sessionStorage.removeItem('tabelaPrecosSession');
-            mostrarTelaAcessoNegado(data.message);
+            mostrarTelaAcessoNegado(data.message || 'Sessão inválida');
             return;
         }
 
@@ -86,10 +89,12 @@ function startSessionCheck() {
     // Verificar a cada 30 segundos
     sessionCheckInterval = setInterval(async () => {
         try {
-            const response = await fetch(`${PORTAL_URL}/api/verify-session`, {
+            const response = await fetch(`${API_URL}/verify-session`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ sessionToken })
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'X-Session-Token': sessionToken
+                }
             });
 
             const data = await response.json();
@@ -97,7 +102,7 @@ function startSessionCheck() {
             if (!data.valid) {
                 clearInterval(sessionCheckInterval);
                 sessionStorage.removeItem('tabelaPrecosSession');
-                mostrarTelaAcessoNegado('Sua sessão expirou');
+                mostrarTelaAcessoNegado(data.message || 'Sua sessão expirou');
             }
         } catch (error) {
             console.error('Erro ao verificar sessão:', error);
@@ -109,14 +114,19 @@ function startSessionCheck() {
 // ======== TELA DE ACESSO NEGADO ===========
 // ==========================================
 function mostrarTelaAcessoNegado(mensagem = 'Acesso não autorizado') {
+    // Limpar qualquer intervalo ativo
+    if (sessionCheckInterval) {
+        clearInterval(sessionCheckInterval);
+    }
+
     document.body.innerHTML = `
         <div style="display: flex; align-items: center; justify-content: center; min-height: 100vh; background: linear-gradient(135deg, #F5F5F5 0%, #FFFFFF 100%); font-family: 'Inter', sans-serif;">
             <div style="text-align: center; padding: 3rem; background: white; border-radius: 24px; box-shadow: 0 20px 60px rgba(0,0,0,0.08); max-width: 500px;">
                 <div style="font-size: 4rem; margin-bottom: 1rem;">🔒</div>
                 <h1 style="font-size: 1.8rem; color: #1E1E1E; margin-bottom: 1rem;">Acesso Restrito</h1>
                 <p style="color: #666; margin-bottom: 2rem; line-height: 1.6;">${mensagem}</p>
-                <button onclick="voltarParaLogin()" style="padding: 1rem 2rem; background: linear-gradient(135deg, #ff5100 0%, #E67E00 100%); color: white; border: none; border-radius: 12px; font-size: 1rem; font-weight: 600; cursor: pointer; box-shadow: 0 8px 24px rgba(255, 140, 0, 0.4);">
-                    Ir para o Login
+                <button onclick="voltarParaLogin()" style="padding: 1rem 2rem; background: linear-gradient(135deg, #ff5100 0%, #E67E00 100%); color: white; border: none; border-radius: 12px; font-size: 1rem; font-weight: 600; cursor: pointer; box-shadow: 0 8px 24px rgba(255, 140, 0, 0.4); transition: transform 0.2s;">
+                    Voltar para o Portal
                 </button>
             </div>
         </div>
@@ -124,6 +134,7 @@ function mostrarTelaAcessoNegado(mensagem = 'Acesso não autorizado') {
 }
 
 function voltarParaLogin() {
+    sessionStorage.removeItem('tabelaPrecosSession');
     window.location.href = PORTAL_URL;
 }
 
@@ -157,9 +168,9 @@ async function checkForUpdates() {
             } 
         });
 
-        if (response.status === 401) {
+        if (response.status === 401 || response.status === 403) {
             sessionStorage.removeItem('tabelaPrecosSession');
-            mostrarTelaAcessoNegado('Sua sessão expirou');
+            mostrarTelaAcessoNegado('Sua sessão expirou ou foi invalidada');
             return;
         }
 
@@ -225,9 +236,9 @@ async function loadPrecos() {
             });
             console.log('Response status:', response.status);
             
-            if (response.status === 401) {
+            if (response.status === 401 || response.status === 403) {
                 sessionStorage.removeItem('tabelaPrecosSession');
-                mostrarTelaAcessoNegado('Sua sessão expirou');
+                mostrarTelaAcessoNegado('Sua sessão expirou ou foi invalidada');
                 return;
             }
             
@@ -359,9 +370,9 @@ async function syncWithServer(formData, editId, tempId) {
             body: JSON.stringify(formData) 
         });
 
-        if (response.status === 401) {
+        if (response.status === 401 || response.status === 403) {
             sessionStorage.removeItem('tabelaPrecosSession');
-            mostrarTelaAcessoNegado('Sua sessão expirou');
+            mostrarTelaAcessoNegado('Sua sessão expirou ou foi invalidada');
             return;
         }
         
@@ -462,9 +473,9 @@ async function syncDeleteWithServer(id, deletedPreco) {
             }
         });
 
-        if (response.status === 401) {
+        if (response.status === 401 || response.status === 403) {
             sessionStorage.removeItem('tabelaPrecosSession');
-            mostrarTelaAcessoNegado('Sua sessão expirou');
+            mostrarTelaAcessoNegado('Sua sessão expirou ou foi invalidada');
             return;
         }
 
