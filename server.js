@@ -39,7 +39,9 @@ app.use(express.static(path.join(__dirname, 'public')));
 // ======== MIDDLEWARE DE AUTENTICAÇÃO ======
 // ==========================================
 async function verificarAutenticacao(req, res, next) {
-  if (req.path === '/' || req.path === '/health') {
+  // Rotas públicas que NÃO precisam de autenticação
+  const publicPaths = ['/', '/health', '/api/health'];
+  if (publicPaths.includes(req.path)) {
     return next();
   }
 
@@ -157,17 +159,34 @@ async function verificarAutenticacao(req, res, next) {
 // ==========================================
 // ======== ROTAS ============================
 // ==========================================
+
+// Rota pública - página inicial
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-app.use('/api', verificarAutenticacao);
+// Rota pública - health check (SEM AUTENTICAÇÃO)
+app.get('/health', (req, res) => {
+  console.log('💚 Health check');
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    supabase: supabaseUrl ? 'configured ✅' : 'not configured ❌',
+    node_version: process.version
+  });
+});
 
+// IMPORTANTE: HEAD para verificar conexão (SEM AUTENTICAÇÃO)
+// Esta rota DEVE vir ANTES do middleware de autenticação
 app.head('/api/precos', (req, res) => {
   console.log('✅ HEAD /api/precos - Status OK');
   res.status(200).end();
 });
 
+// AGORA sim, aplicar autenticação para todas as outras rotas da API
+app.use('/api', verificarAutenticacao);
+
+// Rotas protegidas - precisam de autenticação
 app.get('/api/precos', async (req, res) => {
   console.log('📋 GET /api/precos - Listando preços');
   try {
@@ -309,21 +328,13 @@ app.delete('/api/precos/:id', async (req, res) => {
   }
 });
 
-app.get('/health', (req, res) => {
-  console.log('💚 Health check');
-  res.json({
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    supabase: supabaseUrl ? 'configured ✅' : 'not configured ❌',
-    node_version: process.version
-  });
-});
-
+// Rota 404 - deve ser a última
 app.use((req, res) => {
   console.log('❌ Rota não encontrada:', req.method, req.path);
   res.status(404).json({ error: 'Rota não encontrada' });
 });
 
+// Handler de erros global
 app.use((err, req, res, next) => {
   console.error('❌ Erro não tratado:', err);
   res.status(500).json({ 
@@ -340,6 +351,7 @@ app.listen(PORT, () => {
   console.log(`🔐 Autenticação: Ativa ✅`);
   console.log(`⏰ Horário comercial: Seg-Sex, 8h-18h (Brasília)`);
   console.log(`📁 Arquivos estáticos: ${path.join(__dirname, 'public')}`);
+  console.log(`🔓 HEAD /api/precos: Público (sem autenticação)`);
   console.log('='.repeat(60));
 });
 
