@@ -2,7 +2,7 @@ const API_URL = window.location.hostname === 'localhost' || window.location.host
     ? 'http://localhost:3002/api'
     : `${window.location.origin}/api`;
 
-const PORTAL_URL = 'https://portal-chttps://ir-comercio-portal-zcan.onrender.com'; // ✅ Altere para a URL real do seu portal
+const PORTAL_URL = 'https://ir-comercio-portal-zcan.onrender.com'
 const POLLING_INTERVAL = 3000;
 
 let precos = [];
@@ -46,65 +46,26 @@ function verificarAutenticacao() {
 }
 
 async function verificarSessaoValida() {
-    const maxTentativas = 3;
-    const delayEntreTentativas = 3000; // 3 segundos
-    
-    for (let tentativa = 1; tentativa <= maxTentativas; tentativa++) {
-        try {
-            console.log(`🔄 Tentativa ${tentativa}/${maxTentativas} de verificar sessão...`);
-            
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 segundos de timeout
-            
-            const response = await fetch(`${PORTAL_URL}/api/verify-session`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ sessionToken }),
-                signal: controller.signal
-            });
-            
-            clearTimeout(timeoutId);
+    try {
+        const response = await fetch(`${PORTAL_URL}/api/verify-session`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sessionToken })
+        });
 
-            const data = await response.json();
+        const data = await response.json();
 
-            if (!data.valid) {
-                sessionStorage.removeItem('tabelaPrecosSession');
-                mostrarTelaAcessoNegado(data.message);
-                return;
-            }
-
-            // ✅ Sessão válida - carregar aplicação
-            console.log('✅ Sessão verificada com sucesso!');
-            iniciarAplicacao();
+        if (!data.valid) {
+            sessionStorage.removeItem('tabelaPrecosSession');
+            mostrarTelaAcessoNegado(data.message);
             return;
-            
-        } catch (error) {
-            console.error(`❌ Erro na tentativa ${tentativa}:`, error.message);
-            
-            if (tentativa < maxTentativas) {
-                console.log(`⏳ Aguardando ${delayEntreTentativas/1000}s antes de tentar novamente...`);
-                mostrarMensagemCarregamento(`Verificando autenticação... (${tentativa}/${maxTentativas})`);
-                await new Promise(resolve => setTimeout(resolve, delayEntreTentativas));
-            } else {
-                // Última tentativa falhou
-                console.error('💥 Todas as tentativas falharam');
-                mostrarTelaAcessoNegado('Portal temporariamente indisponível. Por favor, aguarde alguns segundos e tente novamente.');
-            }
         }
-    }
-}
 
-function mostrarMensagemCarregamento(mensagem) {
-    // Mostrar mensagem de loading sem substituir toda a página
-    const loadingDiv = document.getElementById('loadingMessage');
-    if (loadingDiv) {
-        loadingDiv.textContent = mensagem;
-    } else {
-        const div = document.createElement('div');
-        div.id = 'loadingMessage';
-        div.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #ff5100; color: white; padding: 1rem 1.5rem; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 9999; font-family: Inter, sans-serif;';
-        div.textContent = mensagem;
-        document.body.appendChild(div);
+        // Sessão válida - carregar aplicação
+        iniciarAplicacao();
+    } catch (error) {
+        console.error('Erro ao verificar sessão:', error);
+        mostrarTelaAcessoNegado('Erro ao verificar autenticação');
     }
 }
 
