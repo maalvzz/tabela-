@@ -2,7 +2,6 @@ const API_URL = window.location.hostname === 'localhost' || window.location.host
     ? 'http://localhost:3002/api'
     : `${window.location.origin}/api`;
 
-const PORTAL_URL = 'https://ir-comercio-portal-zcan.onrender.com'
 const POLLING_INTERVAL = 3000;
 
 let precos = [];
@@ -10,126 +9,14 @@ let isOnline = false;
 let marcaSelecionada = 'TODAS';
 let marcasDisponiveis = new Set();
 let lastDataHash = '';
-let sessionToken = null;
-let sessionCheckInterval = null;
 
 console.log('API URL configurada:', API_URL);
 
 document.addEventListener('DOMContentLoaded', () => {
-    verificarAutenticacao();
-});
-
-// ==========================================
-// ======== VERIFICAR AUTENTICAÇÃO ==========
-// ==========================================
-function verificarAutenticacao() {
-    // Pegar token da URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const tokenFromUrl = urlParams.get('sessionToken');
-
-    if (tokenFromUrl) {
-        sessionToken = tokenFromUrl;
-        sessionStorage.setItem('tabelaPrecosSession', sessionToken);
-        // Limpar URL sem recarregar a página
-        window.history.replaceState({}, document.title, window.location.pathname);
-    } else {
-        sessionToken = sessionStorage.getItem('tabelaPrecosSession');
-    }
-
-    if (!sessionToken) {
-        mostrarTelaAcessoNegado();
-        return;
-    }
-
-    // Verificar se a sessão é válida
-    verificarSessaoValida();
-}
-
-async function verificarSessaoValida() {
-    try {
-        const response = await fetch(`${PORTAL_URL}/api/verify-session`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ sessionToken })
-        });
-
-        const data = await response.json();
-
-        if (!data.valid) {
-            sessionStorage.removeItem('tabelaPrecosSession');
-            mostrarTelaAcessoNegado(data.message);
-            return;
-        }
-
-        // Sessão válida - carregar aplicação
-        iniciarAplicacao();
-    } catch (error) {
-        console.error('Erro ao verificar sessão:', error);
-        mostrarTelaAcessoNegado('Erro ao verificar autenticação');
-    }
-}
-
-function iniciarAplicacao() {
     loadPrecos();
     startRealtimeSync();
-    startSessionCheck();
-}
+});
 
-// ==========================================
-// ======== VERIFICAÇÃO PERIÓDICA DE SESSÃO =
-// ==========================================
-function startSessionCheck() {
-    if (sessionCheckInterval) {
-        clearInterval(sessionCheckInterval);
-    }
-
-    // Verificar a cada 30 segundos
-    sessionCheckInterval = setInterval(async () => {
-        try {
-            const response = await fetch(`${PORTAL_URL}/api/verify-session`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ sessionToken })
-            });
-
-            const data = await response.json();
-
-            if (!data.valid) {
-                clearInterval(sessionCheckInterval);
-                sessionStorage.removeItem('tabelaPrecosSession');
-                mostrarTelaAcessoNegado('Sua sessão expirou');
-            }
-        } catch (error) {
-            console.error('Erro ao verificar sessão:', error);
-        }
-    }, 30000);
-}
-
-// ==========================================
-// ======== TELA DE ACESSO NEGADO ===========
-// ==========================================
-function mostrarTelaAcessoNegado(mensagem = 'Acesso não autorizado') {
-    document.body.innerHTML = `
-        <div style="display: flex; align-items: center; justify-content: center; min-height: 100vh; background: linear-gradient(135deg, #F5F5F5 0%, #FFFFFF 100%); font-family: 'Inter', sans-serif;">
-            <div style="text-align: center; padding: 3rem; background: white; border-radius: 24px; box-shadow: 0 20px 60px rgba(0,0,0,0.08); max-width: 500px;">
-                <div style="font-size: 4rem; margin-bottom: 1rem;">🔒</div>
-                <h1 style="font-size: 1.8rem; color: #1E1E1E; margin-bottom: 1rem;">Acesso Restrito</h1>
-                <p style="color: #666; margin-bottom: 2rem; line-height: 1.6;">${mensagem}</p>
-                <button onclick="voltarParaLogin()" style="padding: 1rem 2rem; background: linear-gradient(135deg, #ff5100 0%, #E67E00 100%); color: white; border: none; border-radius: 12px; font-size: 1rem; font-weight: 600; cursor: pointer; box-shadow: 0 8px 24px rgba(255, 140, 0, 0.4);">
-                    Ir para o Login
-                </button>
-            </div>
-        </div>
-    `;
-}
-
-function voltarParaLogin() {
-    window.location.href = PORTAL_URL;
-}
-
-// ==========================================
-// ======== FUNÇÕES DA APLICAÇÃO ============
-// ==========================================
 function generateHash(data) { 
     return JSON.stringify(data); 
 }
@@ -139,6 +26,7 @@ function startRealtimeSync() {
         if (isOnline) await checkForUpdates();
     }, POLLING_INTERVAL);
     
+    // Atualiza os tempos relativos a cada 30 segundos
     setInterval(() => {
         if (precos.length > 0) {
             filterPrecos();
@@ -152,17 +40,9 @@ async function checkForUpdates() {
             cache: 'no-cache', 
             headers: { 
                 'Cache-Control': 'no-cache', 
-                'Pragma': 'no-cache',
-                'X-Session-Token': sessionToken
+                'Pragma': 'no-cache' 
             } 
         });
-
-        if (response.status === 401) {
-            sessionStorage.removeItem('tabelaPrecosSession');
-            mostrarTelaAcessoNegado('Sua sessão expirou');
-            return;
-        }
-
         if (!response.ok) return;
         const serverData = await response.json();
         const newHash = generateHash(serverData);
@@ -182,10 +62,7 @@ async function checkServerStatus() {
     try {
         const response = await fetch(`${API_URL}/precos`, { 
             method: 'HEAD', 
-            cache: 'no-cache',
-            headers: {
-                'X-Session-Token': sessionToken
-            }
+            cache: 'no-cache' 
         });
         isOnline = response.ok;
         updateConnectionStatus();
@@ -200,8 +77,6 @@ async function checkServerStatus() {
 
 function updateConnectionStatus() {
     const statusDiv = document.getElementById('connectionStatus');
-    if (!statusDiv) return;
-    
     if (isOnline) {
         statusDiv.className = 'connection-status online';
         statusDiv.querySelector('span:last-child').textContent = 'Online';
@@ -218,18 +93,8 @@ async function loadPrecos() {
     
     try {
         if (serverOnline) {
-            const response = await fetch(`${API_URL}/precos`, {
-                headers: {
-                    'X-Session-Token': sessionToken
-                }
-            });
+            const response = await fetch(`${API_URL}/precos`);
             console.log('Response status:', response.status);
-            
-            if (response.status === 401) {
-                sessionStorage.removeItem('tabelaPrecosSession');
-                mostrarTelaAcessoNegado('Sua sessão expirou');
-                return;
-            }
             
             if (!response.ok) {
                 throw new Error(`Erro ${response.status}: ${response.statusText}`);
@@ -311,6 +176,7 @@ async function handleSubmit(event) {
         return;
     }
 
+    // Atualização instantânea na interface
     const tempId = editId || 'temp_' + Date.now();
     const optimisticData = { ...formData, id: tempId, timestamp: new Date().toISOString() };
 
@@ -329,6 +195,7 @@ async function handleSubmit(event) {
     resetForm();
     toggleForm();
 
+    // Sincronização em segundo plano
     syncWithServer(formData, editId, tempId);
 }
 
@@ -350,20 +217,13 @@ async function syncWithServer(formData, editId, tempId) {
             method = 'POST'; 
         }
 
+        console.log(`Sincronizando: ${method} ${url}`);
+
         const response = await fetch(url, { 
             method, 
-            headers: { 
-                'Content-Type': 'application/json',
-                'X-Session-Token': sessionToken
-            }, 
+            headers: { 'Content-Type': 'application/json' }, 
             body: JSON.stringify(formData) 
         });
-
-        if (response.status === 401) {
-            sessionStorage.removeItem('tabelaPrecosSession');
-            mostrarTelaAcessoNegado('Sua sessão expirou');
-            return;
-        }
         
         if (!response.ok) {
             const errorText = await response.text();
@@ -371,7 +231,9 @@ async function syncWithServer(formData, editId, tempId) {
         }
         
         const savedData = await response.json();
+        console.log('Dados salvos:', savedData);
 
+        // Atualiza com os dados reais do servidor
         if (editId) {
             const index = precos.findIndex(p => p.id === editId);
             if (index !== -1) precos[index] = savedData;
@@ -388,6 +250,7 @@ async function syncWithServer(formData, editId, tempId) {
         filterPrecos();
     } catch (error) {
         console.error('Erro ao sincronizar:', error);
+        // Remove o registro temporário em caso de erro
         if (!editId) {
             precos = precos.filter(p => p.id !== tempId);
             filterPrecos();
@@ -455,19 +318,7 @@ async function syncDeleteWithServer(id, deletedPreco) {
     }
 
     try {
-        const response = await fetch(`${API_URL}/precos/${id}`, { 
-            method: 'DELETE',
-            headers: {
-                'X-Session-Token': sessionToken
-            }
-        });
-
-        if (response.status === 401) {
-            sessionStorage.removeItem('tabelaPrecosSession');
-            mostrarTelaAcessoNegado('Sua sessão expirou');
-            return;
-        }
-
+        const response = await fetch(`${API_URL}/precos/${id}`, { method: 'DELETE' });
         if (!response.ok) throw new Error('Erro ao deletar');
 
         lastDataHash = generateHash(precos);
@@ -499,6 +350,7 @@ function filterPrecos() {
         );
     }
 
+    // Ordena por marca e depois por código
     filtered.sort((a, b) => {
         const marcaCompare = a.marca.localeCompare(b.marca);
         if (marcaCompare !== 0) return marcaCompare;
