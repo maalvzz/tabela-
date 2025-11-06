@@ -3,7 +3,7 @@ const API_URL = window.location.hostname === 'localhost' || window.location.host
     : `${window.location.origin}/api`;
 
 const PORTAL_URL = 'https://ir-comercio-portal-zcan.onrender.com'
-const POLLING_INTERVAL = 3002;
+const POLLING_INTERVAL = 3000;
 
 let precos = [];
 let isOnline = false;
