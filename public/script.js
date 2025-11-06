@@ -106,12 +106,12 @@ function startSessionCheck() {
 // ==========================================
 // ======== TELA DE ACESSO NEGADO ===========
 // ==========================================
-function mostrarTelaAcessoNegado(mensagem = 'Acesso não autorizado') {
+function mostrarTelaAcessoNegado(mensagem = '') {
     document.body.innerHTML = `
         <div style="display: flex; align-items: center; justify-content: center; min-height: 100vh; background: linear-gradient(135deg, #F5F5F5 0%, #FFFFFF 100%); font-family: 'Inter', sans-serif;">
             <div style="text-align: center; padding: 3rem; background: white; border-radius: 24px; box-shadow: 0 20px 60px rgba(0,0,0,0.08); max-width: 500px;">
-                <div style="font-size: 4rem; margin-bottom: 1rem;">🔒</div>
-                <h1 style="font-size: 1.8rem; color: #1E1E1E; margin-bottom: 1rem;">Acesso Restrito</h1>
+                <div style="font-size: 4rem; margin-bottom: 1rem;">❌</div>
+                <h1 style="font-size: 1.8rem; color: #1E1E1E; margin-bottom: 1rem;">Acesso não autorizado</h1>
                 <p style="color: #666; margin-bottom: 2rem; line-height: 1.6;">${mensagem}</p>
                 <button onclick="voltarParaLogin()" style="padding: 1rem 2rem; background: linear-gradient(135deg, #ff5100 0%, #E67E00 100%); color: white; border: none; border-radius: 12px; font-size: 1rem; font-weight: 600; cursor: pointer; box-shadow: 0 8px 24px rgba(255, 140, 0, 0.4);">
                     Ir para o Login
