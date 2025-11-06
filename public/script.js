@@ -1,5 +1,5 @@
 const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    ? 'http://localhost:3000/api'
+    ? 'http://localhost:3002/api'
     : `${window.location.origin}/api`;
 
 const PORTAL_URL = 'https://ir-comercio-portal-zcan.onrender.com'
