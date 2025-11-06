@@ -9,6 +9,52 @@ const app = express();
 const PORT = process.env.PORT || 3002;
 
 // ==========================================
+// ======== ARQUIVO DE LOG ==================
+// ==========================================
+const logFilePath = path.join(__dirname, 'acessos.log');
+
+function registrarAcesso(req, res, next) {
+  const xForwardedFor = req.headers['x-forwarded-for'];
+  const clientIP = xForwardedFor
+    ? xForwardedFor.split(',')[0].trim()
+    : req.socket.remoteAddress;
+
+  const cleanIP = clientIP.replace('::ffff:', '');
+  const logEntry = `[${new Date().toISOString()}] IP: ${cleanIP} Rota: ${req.path}\n`;
+
+  // Grava no arquivo de log
+  fs.appendFile(logFilePath, logEntry, (err) => {
+    if (err) console.error('Erro ao gravar log:', err);
+  });
+2
+  next();
+}
+
+// ==========================================
+// ======== FILTRO DE IPS AUTORIZADOS ========
+// ==========================================
+const allowedIPs = ['187.36.172.217']; // Seu IP público
+
+app.use(registrarAcesso); // Middleware de log antes do filtro
+app.use((req, res, next) => {
+  const xForwardedFor = req.headers['x-forwarded-for'];
+  const clientIP = xForwardedFor
+    ? xForwardedFor.split(',')[0].trim()
+    : req.socket.remoteAddress;
+
+  const cleanIP = clientIP.replace('::ffff:', '');
+
+  if (!allowedIPs.includes(cleanIP)) {
+    return res.status(403).json({
+      error: 'Acesso negado',
+      message: `Seu IP (${cleanIP}) não tem permissão para acessar este serviço`,
+    });
+  }
+
+  next();
+});
+
+// ==========================================
 // ======== CONFIGURAÇÃO DO SUPABASE ========
 // ==========================================
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -21,116 +67,10 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 app.use(cors({
   origin: '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'HEAD'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Session-Token']
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
-
-// ==========================================
-// ======== MIDDLEWARE DE AUTENTICAÇÃO ======
-// ==========================================
-async function verificarAutenticacao(req, res, next) {
-  // Permitir acesso livre à página inicial e health check
-  if (req.path === '/' || req.path === '/health') {
-    return next();
-  }
-
-  // Pegar token da sessão
-  const sessionToken = req.headers['x-session-token'] || req.query.sessionToken;
-
-  if (!sessionToken) {
-    return res.status(401).json({
-      error: 'Não autenticado',
-      message: 'Token de sessão não encontrado',
-      redirectToLogin: true
-    });
-  }
-
-  try {
-    // Verificar se a sessão é válida
-    const { data: session, error } = await supabase
-      .from('active_sessions')
-      .select(`
-        *,
-        users:user_id (
-          id,
-          username,
-          name,
-          is_admin,
-          is_active
-        )
-      `)
-      .eq('session_token', sessionToken)
-      .eq('is_active', true)
-      .single();
-
-    if (error || !session) {
-      return res.status(401).json({
-        error: 'Sessão inválida',
-        message: 'Sua sessão expirou ou foi invalidada',
-        redirectToLogin: true
-      });
-    }
-
-    // Verificar se o usuário está ativo
-    if (!session.users.is_active) {
-      return res.status(401).json({
-        error: 'Usuário inativo',
-        message: 'Sua conta foi desativada',
-        redirectToLogin: true
-      });
-    }
-
-    // Verificar se a sessão não expirou
-    if (new Date(session.expires_at) < new Date()) {
-      await supabase
-        .from('active_sessions')
-        .update({ is_active: false })
-        .eq('session_token', sessionToken);
-
-      return res.status(401).json({
-        error: 'Sessão expirada',
-        message: 'Sua sessão expirou. Faça login novamente',
-        redirectToLogin: true
-      });
-    }
-
-    // Verificar horário comercial para não-admin
-    if (!session.users.is_admin) {
-      const now = new Date();
-      const brasiliaTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
-      const dayOfWeek = brasiliaTime.getDay();
-      const hour = brasiliaTime.getHours();
-      const isBusinessHours = dayOfWeek >= 1 && dayOfWeek <= 5 && hour >= 8 && hour < 18;
-
-      if (!isBusinessHours) {
-        return res.status(403).json({
-          error: 'Fora do horário comercial',
-          message: 'Acesso permitido apenas de segunda a sexta, das 8h às 18h (horário de Brasília)',
-          redirectToLogin: true
-        });
-      }
-    }
-
-    // Atualizar última atividade
-    await supabase
-      .from('active_sessions')
-      .update({ last_activity: new Date().toISOString() })
-      .eq('session_token', sessionToken);
-
-    // Adicionar informações do usuário na requisição
-    req.user = session.users;
-    req.sessionToken = sessionToken;
-
-    next();
-  } catch (error) {
-    console.error('❌ Erro ao verificar autenticação:', error);
-    return res.status(500).json({
-      error: 'Erro interno',
-      message: 'Erro ao verificar autenticação'
-    });
-  }
-}
 
 // ==========================================
 // ======== ROTAS ============================
@@ -138,9 +78,6 @@ async function verificarAutenticacao(req, res, next) {
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
-
-// Aplicar autenticação em todas as rotas da API
-app.use('/api', verificarAutenticacao);
 
 app.head('/api/precos', (req, res) => res.status(200).end());
 
@@ -274,8 +211,7 @@ app.use((req, res) => {
 // ==========================================
 app.listen(PORT, () => {
   console.log(`==> Servidor rodando na porta ${PORT}`);
-  console.log(`==> URL principal: https://tabela-precos-3yg9.onrender.com`);
+  console.log(`==> URL principal: https://tabela-precos.onrender.com`);
   console.log(`==> Supabase URL: ${supabaseUrl}`);
-  console.log(`==> Autenticação: Ativa ✅`);
-  console.log(`==> Filtro de IP: Removido ✅`);
+  console.log(`==> Supabase configurado: ${supabaseUrl ? 'Sim' : 'Não'}`);
 });
