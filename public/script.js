@@ -1,3 +1,7 @@
+// ==========================================
+// ======== CONFIGURAÇÃO ====================
+// ==========================================
+const PORTAL_URL = 'https://ir-comercio-portal-zcan.onrender.com';
 const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:3002/api'
     : `${window.location.origin}/api`;
@@ -9,13 +13,121 @@ let isOnline = false;
 let marcaSelecionada = 'TODAS';
 let marcasDisponiveis = new Set();
 let lastDataHash = '';
+let sessionToken = null;
+let sessionCheckInterval = null;
 
 console.log('API URL configurada:', API_URL);
 
 document.addEventListener('DOMContentLoaded', () => {
+    verificarAutenticacao();
+});
+
+// ==========================================
+// ======== VERIFICAR AUTENTICAÇÃO ==========
+// ==========================================
+function verificarAutenticacao() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tokenFromUrl = urlParams.get('sessionToken');
+
+    if (tokenFromUrl) {
+        sessionToken = tokenFromUrl;
+        sessionStorage.setItem('tabelaPrecosSession', sessionToken);
+        window.history.replaceState({}, document.title, window.location.pathname);
+    } else {
+        sessionToken = sessionStorage.getItem('tabelaPrecosSession');
+    }
+
+    if (!sessionToken) {
+        mostrarTelaAcessoNegado();
+        return;
+    }
+
+    verificarSessaoValida();
+}
+
+async function verificarSessaoValida() {
+    try {
+        const response = await fetch(`${PORTAL_URL}/api/verify-session`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sessionToken })
+        });
+
+        const data = await response.json();
+
+        if (!data.valid) {
+            sessionStorage.removeItem('tabelaPrecosSession');
+            mostrarTelaAcessoNegado(data.message);
+            return;
+        }
+
+        iniciarAplicacao();
+    } catch (error) {
+        console.error('Erro ao verificar sessão:', error);
+        mostrarTelaAcessoNegado('Erro ao verificar autenticação');
+    }
+}
+
+function iniciarAplicacao() {
     loadPrecos();
     startRealtimeSync();
-});
+    startSessionCheck();
+}
+
+// ==========================================
+// ======== VERIFICAÇÃO PERIÓDICA DE SESSÃO =
+// ==========================================
+function startSessionCheck() {
+    if (sessionCheckInterval) {
+        clearInterval(sessionCheckInterval);
+    }
+
+    sessionCheckInterval = setInterval(async () => {
+        try {
+            const response = await fetch(`${PORTAL_URL}/api/verify-session`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ sessionToken })
+            });
+
+            const data = await response.json();
+
+            if (!data.valid) {
+                clearInterval(sessionCheckInterval);
+                sessionStorage.removeItem('tabelaPrecosSession');
+                mostrarTelaAcessoNegado('Sua sessão expirou');
+            }
+        } catch (error) {
+            console.error('Erro ao verificar sessão:', error);
+        }
+    }, 30000); // Verifica a cada 30 segundos
+}
+
+// ==========================================
+// ======== TELA DE ACESSO NEGADO ===========
+// ==========================================
+function mostrarTelaAcessoNegado(mensagem = 'Acesso não autorizado') {
+    document.body.innerHTML = `
+        <div style="display: flex; align-items: center; justify-content: center; min-height: 100vh; background: linear-gradient(135deg, #F5F5F5 0%, #FFFFFF 100%); font-family: 'Inter', sans-serif;">
+            <div style="text-align: center; padding: 3rem; background: white; border-radius: 24px; box-shadow: 0 20px 60px rgba(0,0,0,0.08); max-width: 500px;">
+                <div style="font-size: 4rem; margin-bottom: 1rem;">🔒</div>
+                <h1 style="font-size: 1.8rem; color: #1E1E1E; margin-bottom: 1rem;">Acesso Restrito</h1>
+                <p style="color: #666; margin-bottom: 2rem; line-height: 1.6;">${mensagem}</p>
+                <button onclick="voltarParaLogin()" style="padding: 1rem 2rem; background: linear-gradient(135deg, #ff5100 0%, #E67E00 100%); color: white; border: none; border-radius: 12px; font-size: 1rem; font-weight: 600; cursor: pointer; box-shadow: 0 8px 24px rgba(255, 140, 0, 0.4);">
+                    Ir para o Login
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+function voltarParaLogin() {
+    window.location.href = PORTAL_URL;
+}
+
+// ==========================================
+// ======== FUNÇÕES DA APLICAÇÃO ============
+// ==========================================
 
 function generateHash(data) { 
     return JSON.stringify(data); 
@@ -40,10 +152,19 @@ async function checkForUpdates() {
             cache: 'no-cache', 
             headers: { 
                 'Cache-Control': 'no-cache', 
-                'Pragma': 'no-cache' 
+                'Pragma': 'no-cache',
+                'X-Session-Token': sessionToken
             } 
         });
+
+        if (response.status === 401) {
+            sessionStorage.removeItem('tabelaPrecosSession');
+            mostrarTelaAcessoNegado('Sua sessão expirou');
+            return;
+        }
+
         if (!response.ok) return;
+        
         const serverData = await response.json();
         const newHash = generateHash(serverData);
         if (newHash !== lastDataHash) {
@@ -62,7 +183,10 @@ async function checkServerStatus() {
     try {
         const response = await fetch(`${API_URL}/precos`, { 
             method: 'HEAD', 
-            cache: 'no-cache' 
+            cache: 'no-cache',
+            headers: {
+                'X-Session-Token': sessionToken
+            }
         });
         isOnline = response.ok;
         updateConnectionStatus();
@@ -77,6 +201,8 @@ async function checkServerStatus() {
 
 function updateConnectionStatus() {
     const statusDiv = document.getElementById('connectionStatus');
+    if (!statusDiv) return;
+
     if (isOnline) {
         statusDiv.className = 'connection-status online';
         statusDiv.querySelector('span:last-child').textContent = 'Online';
@@ -93,8 +219,18 @@ async function loadPrecos() {
     
     try {
         if (serverOnline) {
-            const response = await fetch(`${API_URL}/precos`);
+            const response = await fetch(`${API_URL}/precos`, {
+                headers: {
+                    'X-Session-Token': sessionToken
+                }
+            });
             console.log('Response status:', response.status);
+
+            if (response.status === 401) {
+                sessionStorage.removeItem('tabelaPrecosSession');
+                mostrarTelaAcessoNegado('Sua sessão expirou');
+                return;
+            }
             
             if (!response.ok) {
                 throw new Error(`Erro ${response.status}: ${response.statusText}`);
@@ -221,9 +357,18 @@ async function syncWithServer(formData, editId, tempId) {
 
         const response = await fetch(url, { 
             method, 
-            headers: { 'Content-Type': 'application/json' }, 
+            headers: { 
+                'Content-Type': 'application/json',
+                'X-Session-Token': sessionToken
+            }, 
             body: JSON.stringify(formData) 
         });
+
+        if (response.status === 401) {
+            sessionStorage.removeItem('tabelaPrecosSession');
+            mostrarTelaAcessoNegado('Sua sessão expirou');
+            return;
+        }
         
         if (!response.ok) {
             const errorText = await response.text();
@@ -280,7 +425,7 @@ function cancelEdit() {
     toggleForm();
 }
 
-function editPreco(id) {
+window.editPreco = function(id) {
     const preco = precos.find(p => p.id === id);
     if (!preco) return;
 
@@ -295,9 +440,9 @@ function editPreco(id) {
     document.getElementById('cancelBtn').classList.remove('hidden');
     document.getElementById('formCard').classList.remove('hidden');
     document.getElementById('marca').focus();
-}
+};
 
-async function deletePreco(id) {
+window.deletePreco = async function(id) {
     if (!confirm('Tem certeza que deseja excluir este registro?')) return;
 
     const deletedPreco = precos.find(p => p.id === id);
@@ -308,7 +453,7 @@ async function deletePreco(id) {
     showMessage('Registro excluído!', 'success');
 
     syncDeleteWithServer(id, deletedPreco);
-}
+};
 
 async function syncDeleteWithServer(id, deletedPreco) {
     const serverOnline = await checkServerStatus();
@@ -318,7 +463,19 @@ async function syncDeleteWithServer(id, deletedPreco) {
     }
 
     try {
-        const response = await fetch(`${API_URL}/precos/${id}`, { method: 'DELETE' });
+        const response = await fetch(`${API_URL}/precos/${id}`, { 
+            method: 'DELETE',
+            headers: {
+                'X-Session-Token': sessionToken
+            }
+        });
+
+        if (response.status === 401) {
+            sessionStorage.removeItem('tabelaPrecosSession');
+            mostrarTelaAcessoNegado('Sua sessão expirou');
+            return;
+        }
+
         if (!response.ok) throw new Error('Erro ao deletar');
 
         lastDataHash = generateHash(precos);
@@ -411,8 +568,8 @@ function renderPrecos(precosToRender) {
                             <td>${p.descricao}</td>
                             <td style="color: var(--text-secondary); font-size: 0.85rem;">${getTimeAgo(p.timestamp)}</td>
                             <td class="actions-cell" style="text-align: center;">
-                                <button onclick="editPreco('${p.id}')" class="action-btn edit">Editar</button>
-                                <button onclick="deletePreco('${p.id}')" class="action-btn delete">Excluir</button>
+                                <button onclick="window.editPreco('${p.id}')" class="action-btn edit">Editar</button>
+                                <button onclick="window.deletePreco('${p.id}')" class="action-btn delete">Excluir</button>
                             </td>
                         </tr>
                     `).join('')}
@@ -426,6 +583,8 @@ function renderPrecos(precosToRender) {
 
 function showMessage(message, type) {
     const messageDiv = document.getElementById('statusMessage');
+    if (!messageDiv) return;
+    
     messageDiv.textContent = message;
     messageDiv.className = `status-message ${type}`;
     messageDiv.classList.remove('hidden');
