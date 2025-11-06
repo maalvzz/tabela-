@@ -2,7 +2,6 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const fs = require('fs');
 const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
@@ -30,7 +29,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 // ======== MIDDLEWARE DE AUTENTICAÇÃO ======
 // ==========================================
 async function verificarAutenticacao(req, res, next) {
-  // Permitir acesso livre à página inicial e health check
+  // Permitir acesso livre à página inicial, health check e verify-session
   if (req.path === '/' || req.path === '/health') {
     return next();
   }
@@ -139,8 +138,103 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Aplicar autenticação em todas as rotas da API
-app.use('/api', verificarAutenticacao);
+// ========== NOVA ROTA: VERIFICAR SESSÃO ===========
+// Esta rota permite que o frontend valide a sessão sem fazer uma requisição completa
+app.post('/api/verify-session', async (req, res) => {
+  const sessionToken = req.headers['x-session-token'] || req.body.sessionToken;
+
+  if (!sessionToken) {
+    return res.json({ 
+      valid: false, 
+      message: 'Token de sessão não encontrado' 
+    });
+  }
+
+  try {
+    const { data: session, error } = await supabase
+      .from('active_sessions')
+      .select(`
+        *,
+        users:user_id (
+          id,
+          username,
+          name,
+          is_admin,
+          is_active
+        )
+      `)
+      .eq('session_token', sessionToken)
+      .eq('is_active', true)
+      .single();
+
+    if (error || !session) {
+      return res.json({ 
+        valid: false, 
+        message: 'Sessão inválida ou expirada' 
+      });
+    }
+
+    if (!session.users.is_active) {
+      return res.json({ 
+        valid: false, 
+        message: 'Usuário inativo' 
+      });
+    }
+
+    if (new Date(session.expires_at) < new Date()) {
+      await supabase
+        .from('active_sessions')
+        .update({ is_active: false })
+        .eq('session_token', sessionToken);
+
+      return res.json({ 
+        valid: false, 
+        message: 'Sessão expirada' 
+      });
+    }
+
+    // Verificar horário comercial para não-admin
+    if (!session.users.is_admin) {
+      const now = new Date();
+      const brasiliaTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+      const dayOfWeek = brasiliaTime.getDay();
+      const hour = brasiliaTime.getHours();
+      const isBusinessHours = dayOfWeek >= 1 && dayOfWeek <= 5 && hour >= 8 && hour < 18;
+
+      if (!isBusinessHours) {
+        return res.json({ 
+          valid: false, 
+          message: 'Fora do horário comercial. Acesso permitido apenas de segunda a sexta, das 8h às 18h' 
+        });
+      }
+    }
+
+    // Atualizar última atividade
+    await supabase
+      .from('active_sessions')
+      .update({ last_activity: new Date().toISOString() })
+      .eq('session_token', sessionToken);
+
+    res.json({ 
+      valid: true,
+      user: {
+        id: session.users.id,
+        username: session.users.username,
+        name: session.users.name,
+        is_admin: session.users.is_admin
+      }
+    });
+  } catch (error) {
+    console.error('❌ Erro ao verificar sessão:', error);
+    res.json({ 
+      valid: false, 
+      message: 'Erro ao verificar sessão' 
+    });
+  }
+});
+
+// Aplicar autenticação em todas as outras rotas da API
+app.use('/api/precos', verificarAutenticacao);
 
 app.head('/api/precos', (req, res) => res.status(200).end());
 
@@ -258,7 +352,8 @@ app.get('/health', (req, res) => {
   res.json({
     status: 'ok',
     timestamp: new Date().toISOString(),
-    supabase: supabaseUrl ? 'configured' : 'not configured'
+    supabase: supabaseUrl ? 'configured' : 'not configured',
+    authentication: 'enabled'
   });
 });
 
@@ -273,9 +368,16 @@ app.use((req, res) => {
 // ======== INICIAR SERVIDOR ================
 // ==========================================
 app.listen(PORT, () => {
-  console.log(`==> Servidor rodando na porta ${PORT}`);
-  console.log(`==> URL principal: https://tabela-precos-3yg9.onrender.com`);
-  console.log(`==> Supabase URL: ${supabaseUrl}`);
-  console.log(`==> Autenticação: Ativa ✅`);
-  console.log(`==> Filtro de IP: Removido ✅`);
+  console.log(`
+╔════════════════════════════════════════════════════════════╗
+║                 🚀 SERVIDOR INICIADO                       ║
+╠════════════════════════════════════════════════════════════╣
+║  Porta:              ${PORT}                                    ║
+║  URL Principal:      https://tabela-precos-3yg9.onrender.com ║
+║  Supabase:           ${supabaseUrl ? '✅ Configurado' : '❌ Não configurado'}              ║
+║  Autenticação:       ✅ Ativa                               ║
+║  Validação Sessão:   ✅ /api/verify-session                ║
+║  Horário Comercial:  ✅ 8h-18h (Não-admin)                 ║
+╚════════════════════════════════════════════════════════════╝
+  `);
 });
