@@ -2,7 +2,7 @@ const API_URL = window.location.hostname === 'localhost' || window.location.host
     ? 'http://localhost:3002/api'
     : `${window.location.origin}/api`;
 
-const PORTAL_URL = 'https://portal-central-ircomercio.onrender.com'; // ✅ Altere para a URL real do seu portal
+const PORTAL_URL = 'https://portal-chttps://ir-comercio-portal-zcan.onrender.com'; // ✅ Altere para a URL real do seu portal
 const POLLING_INTERVAL = 3000;
 
 let precos = [];
