@@ -38,9 +38,6 @@ function showConfirm(message, options = {}) {
             <div class="modal-overlay" id="confirmModal">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <div class="modal-icon ${type}">
-                            ${type === 'warning' ? '⚠️' : 'ℹ️'}
-                        </div>
                         <h3 class="modal-title">${title}</h3>
                     </div>
                     <p class="modal-message">${message}</p>
@@ -101,9 +98,6 @@ function showFormModal(editingId = null) {
         <div class="modal-overlay" id="formModal">
             <div class="modal-content large">
                 <div class="modal-header">
-                    <div class="modal-icon primary">
-                        ${isEditing ? '✏️' : '➕'}
-                    </div>
                     <h3 class="modal-title">${isEditing ? 'Editar Registro' : 'Novo Registro'}</h3>
                 </div>
                 <div class="modal-form-content">
