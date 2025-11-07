@@ -38,6 +38,9 @@ function showConfirm(message, options = {}) {
             <div class="modal-overlay" id="confirmModal">
                 <div class="modal-content">
                     <div class="modal-header">
+                        <div class="modal-icon ${type}">
+                            ${type === 'warning' ? '⚠️' : 'ℹ️'}
+                        </div>
                         <h3 class="modal-title">${title}</h3>
                     </div>
                     <p class="modal-message">${message}</p>
@@ -85,6 +88,129 @@ function showConfirm(message, options = {}) {
             document.head.appendChild(style);
         }
     });
+}
+
+// ==========================================
+// ======== MODAL DE FORMULÁRIO =============
+// ==========================================
+function showFormModal(editingId = null) {
+    const isEditing = editingId !== null;
+    const preco = isEditing ? precos.find(p => p.id === editingId) : null;
+
+    const modalHTML = `
+        <div class="modal-overlay" id="formModal">
+            <div class="modal-content large">
+                <div class="modal-header">
+                    <div class="modal-icon primary">
+                        ${isEditing ? '✏️' : '➕'}
+                    </div>
+                    <h3 class="modal-title">${isEditing ? 'Editar Registro' : 'Novo Registro'}</h3>
+                </div>
+                <div class="modal-form-content">
+                    <form id="modalPrecoForm">
+                        <input type="hidden" id="modalEditId" value="${editingId || ''}">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="modalMarca">Marca *</label>
+                                <input type="text" id="modalMarca" placeholder="Nome da marca" value="${preco?.marca || ''}" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="modalCodigo">Código *</label>
+                                <input type="text" id="modalCodigo" placeholder="Código do produto" value="${preco?.codigo || ''}" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="modalPreco">Preço (R$) *</label>
+                                <input type="number" id="modalPreco" step="0.01" min="0" value="${preco?.preco || ''}" required>
+                            </div>
+
+                            <div class="form-group" style="grid-column: 1 / -1;">
+                                <label for="modalDescricao">Descrição do Produto *</label>
+                                <textarea id="modalDescricao" rows="3" placeholder="Descrição completa do produto..." required>${preco?.descricao || ''}</textarea>
+                            </div>
+                        </div>
+
+                        <div class="modal-actions">
+                            <button type="button" class="secondary" id="modalCancelFormBtn">Cancelar</button>
+                            <button type="submit" class="primary">${isEditing ? 'Atualizar Registro' : 'Salvar Registro'}</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+    const modal = document.getElementById('formModal');
+    const form = document.getElementById('modalPrecoForm');
+    const cancelBtn = document.getElementById('modalCancelFormBtn');
+
+    const closeModal = () => {
+        modal.style.animation = 'fadeOut 0.2s ease forwards';
+        setTimeout(() => {
+            modal.remove();
+        }, 200);
+    };
+
+    // Submeter formulário
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const formData = {
+            marca: document.getElementById('modalMarca').value.trim(),
+            codigo: document.getElementById('modalCodigo').value.trim(),
+            preco: parseFloat(document.getElementById('modalPreco').value),
+            descricao: document.getElementById('modalDescricao').value.trim()
+        };
+
+        const editId = document.getElementById('modalEditId').value;
+
+        const codigoDuplicado = precos.find(p => 
+            p.codigo.toLowerCase() === formData.codigo.toLowerCase() && p.id !== editId
+        );
+
+        if (codigoDuplicado) {
+            showMessage(`Erro: O código "${formData.codigo}" já está cadastrado`, 'error');
+            document.getElementById('modalCodigo').focus();
+            return;
+        }
+
+        // Atualização instantânea na interface
+        const tempId = editId || 'temp_' + Date.now();
+        const optimisticData = { ...formData, id: tempId, timestamp: new Date().toISOString() };
+
+        if (editId) {
+            const index = precos.findIndex(p => p.id === editId);
+            if (index !== -1) precos[index] = optimisticData;
+            showMessage('Registro atualizado!', 'success');
+        } else {
+            precos.push(optimisticData);
+            showMessage('Registro criado!', 'success');
+        }
+
+        atualizarMarcasDisponiveis();
+        renderMarcasFilter();
+        filterPrecos();
+        closeModal();
+
+        // Sincronização em segundo plano
+        syncWithServer(formData, editId, tempId);
+    });
+
+    // Cancelar
+    cancelBtn.addEventListener('click', closeModal);
+
+    // Fechar ao clicar fora do modal
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+
+    // Focar no primeiro campo
+    setTimeout(() => {
+        document.getElementById('modalMarca').focus();
+    }, 100);
 }
 
 // ==========================================
@@ -360,43 +486,8 @@ function getFormData() {
     };
 }
 
-async function handleSubmit(event) {
-    event.preventDefault();
-
-    const formData = getFormData();
-    const editId = document.getElementById('editId').value;
-
-    const codigoDuplicado = precos.find(p => 
-        p.codigo.toLowerCase() === formData.codigo.toLowerCase() && p.id !== editId
-    );
-
-    if (codigoDuplicado) {
-        showMessage(`Erro: O código "${formData.codigo}" já está cadastrado`, 'error');
-        document.getElementById('codigo').focus();
-        return;
-    }
-
-    // Atualização instantânea na interface
-    const tempId = editId || 'temp_' + Date.now();
-    const optimisticData = { ...formData, id: tempId, timestamp: new Date().toISOString() };
-
-    if (editId) {
-        const index = precos.findIndex(p => p.id === editId);
-        if (index !== -1) precos[index] = optimisticData;
-        showMessage('Registro atualizado!', 'success');
-    } else {
-        precos.push(optimisticData);
-        showMessage('Registro criado!', 'success');
-    }
-
-    atualizarMarcasDisponiveis();
-    renderMarcasFilter();
-    filterPrecos();
-    resetForm();
-    toggleForm();
-
-    // Sincronização em segundo plano
-    syncWithServer(formData, editId, tempId);
+function toggleForm() {
+    showFormModal();
 }
 
 async function syncWithServer(formData, editId, tempId) {
@@ -468,42 +559,8 @@ async function syncWithServer(formData, editId, tempId) {
     }
 }
 
-function toggleForm() {
-    const formCard = document.getElementById('formCard');
-    formCard.classList.toggle('hidden');
-    if (!formCard.classList.contains('hidden')) {
-        document.getElementById('marca').focus();
-    }
-}
-
-function resetForm() {
-    document.getElementById('precoForm').reset();
-    document.getElementById('editId').value = '';
-    document.getElementById('formTitle').textContent = 'Novo Registro';
-    document.getElementById('submitText').textContent = 'Salvar Registro';
-    document.getElementById('cancelBtn').classList.add('hidden');
-}
-
-function cancelEdit() {
-    resetForm();
-    toggleForm();
-}
-
 window.editPreco = function(id) {
-    const preco = precos.find(p => p.id === id);
-    if (!preco) return;
-
-    document.getElementById('editId').value = preco.id;
-    document.getElementById('marca').value = preco.marca;
-    document.getElementById('codigo').value = preco.codigo;
-    document.getElementById('preco').value = preco.preco;
-    document.getElementById('descricao').value = preco.descricao;
-
-    document.getElementById('formTitle').textContent = 'Editar Registro';
-    document.getElementById('submitText').textContent = 'Atualizar Registro';
-    document.getElementById('cancelBtn').classList.remove('hidden');
-    document.getElementById('formCard').classList.remove('hidden');
-    document.getElementById('marca').focus();
+    showFormModal(id);
 };
 
 window.deletePreco = async function(id) {
