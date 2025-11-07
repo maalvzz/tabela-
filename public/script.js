@@ -23,6 +23,74 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ==========================================
+// ======== MODAL DE CONFIRMAÇÃO ============
+// ==========================================
+function showConfirm(message, options = {}) {
+    return new Promise((resolve) => {
+        const {
+            title = 'Confirmação',
+            confirmText = 'Confirmar',
+            cancelText = 'Cancelar',
+            type = 'warning' // 'warning' ou 'info'
+        } = options;
+
+        const modalHTML = `
+            <div class="modal-overlay" id="confirmModal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <div class="modal-icon ${type}">
+                            ${type === 'warning' ? '⚠️' : 'ℹ️'}
+                        </div>
+                        <h3 class="modal-title">${title}</h3>
+                    </div>
+                    <p class="modal-message">${message}</p>
+                    <div class="modal-actions">
+                        <button class="secondary" id="modalCancelBtn">${cancelText}</button>
+                        <button class="${type === 'warning' ? 'danger' : 'primary'}" id="modalConfirmBtn">${confirmText}</button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+        const modal = document.getElementById('confirmModal');
+        const confirmBtn = document.getElementById('modalConfirmBtn');
+        const cancelBtn = document.getElementById('modalCancelBtn');
+
+        const closeModal = (result) => {
+            modal.style.animation = 'fadeOut 0.2s ease forwards';
+            setTimeout(() => {
+                modal.remove();
+                resolve(result);
+            }, 200);
+        };
+
+        confirmBtn.addEventListener('click', () => closeModal(true));
+        cancelBtn.addEventListener('click', () => closeModal(false));
+        
+        // Fechar ao clicar fora do modal
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeModal(false);
+        });
+
+        // Adicionar animação de fade out ao CSS
+        if (!document.querySelector('#modalAnimations')) {
+            const style = document.createElement('style');
+            style.id = 'modalAnimations';
+            style.textContent = `
+                @keyframes fadeOut {
+                    to {
+                        opacity: 0;
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+    });
+}
+
+// ==========================================
 // ======== VERIFICAR AUTENTICAÇÃO ==========
 // ==========================================
 function verificarAutenticacao() {
@@ -442,7 +510,17 @@ window.editPreco = function(id) {
 };
 
 window.deletePreco = async function(id) {
-    if (!confirm('Tem certeza que deseja excluir este registro?')) return;
+    const confirmed = await showConfirm(
+        'Tem certeza que deseja excluir este registro? Esta ação não pode ser desfeita.',
+        {
+            title: 'Excluir Registro',
+            confirmText: 'Excluir',
+            cancelText: 'Cancelar',
+            type: 'warning'
+        }
+    );
+
+    if (!confirmed) return;
 
     const deletedPreco = precos.find(p => p.id === id);
     precos = precos.filter(p => p.id !== id);
