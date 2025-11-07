@@ -23,42 +23,7 @@
         <div id="statusMessage" class="hidden"></div>
 
         <div class="button-wrapper">
-            <button onclick="toggleForm()">Registrar Preços</button>
-        </div>
-
-        <div class="card hidden" id="formCard">
-            <h2 id="formTitle">Novo Registro</h2>
-            <form id="precoForm" onsubmit="handleSubmit(event)">
-                <input type="hidden" id="editId">
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label for="marca">Marca *</label>
-                        <input type="text" id="marca" placeholder="Nome da marca" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="codigo">Código *</label>
-                        <input type="text" id="codigo" placeholder="Código do produto" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="preco">Preço (R$) *</label>
-                        <input type="number" id="preco" step="0.01" min="0" required>
-                    </div>
-
-                    <div class="form-group" style="grid-column: 1 / -1;">
-                        <label for="descricao">Descrição do Produto *</label>
-                        <textarea id="descricao" rows="3" placeholder="Descrição completa do produto..." required></textarea>
-                    </div>
-                </div>
-
-                <div>
-                    <button type="submit" id="submitBtn">
-                        <span id="submitText">Salvar Registro</span>
-                    </button>
-                    <button type="button" class="secondary hidden" id="cancelBtn" onclick="cancelEdit()">✖ Cancelar</button>
-                </div>
-            </form>
+            <button onclick="toggleForm()">➕ Registrar Preços</button>
         </div>
 
         <div class="card">
