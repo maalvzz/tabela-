@@ -38,9 +38,6 @@ function showConfirm(message, options = {}) {
             <div class="modal-overlay" id="confirmModal">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <div class="modal-icon ${type}">
-                            ${type === 'warning' ? '⚠️' : 'ℹ️'}
-                        </div>
                         <h3 class="modal-title">${title}</h3>
                     </div>
                     <p class="modal-message">${message}</p>
