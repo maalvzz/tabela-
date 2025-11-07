@@ -98,7 +98,7 @@ function showFormModal(editingId = null) {
         <div class="modal-overlay" id="formModal">
             <div class="modal-content large">
                 <div class="modal-header">
-                    <h3 class="modal-title">${isEditing ? 'Editar Registro' : 'Novo Registro'}</h3>
+                    <h3 class="modal-title">${isEditing ? 'Editar' : 'Registrar'}</h3>
                 </div>
                 <div class="modal-form-content">
                     <form id="modalPrecoForm">
@@ -121,13 +121,13 @@ function showFormModal(editingId = null) {
 
                             <div class="form-group" style="grid-column: 1 / -1;">
                                 <label for="modalDescricao">Descrição do Produto *</label>
-                                <textarea id="modalDescricao" rows="3" placeholder="Descrição completa do produto..." required>${preco?.descricao || ''}</textarea>
+                                <textarea id="modalDescricao" rows="3" placeholder="Descrição do produto..." required>${preco?.descricao || ''}</textarea>
                             </div>
                         </div>
 
                         <div class="modal-actions">
                             <button type="button" class="secondary" id="modalCancelFormBtn">Cancelar</button>
-                            <button type="submit" class="primary">${isEditing ? 'Atualizar Registro' : 'Salvar Registro'}</button>
+                            <button type="submit" class="primary">${isEditing ? 'Atualizar' : 'Salvar'}</button>
                         </div>
                     </form>
                 </div>
