@@ -27,18 +27,20 @@
         </div>
 
         <div class="card">
+            <!-- PRIMEIRO: Filtrar por Marca -->
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; margin-bottom: 1rem; font-weight: 600; color: var(--text-primary);">
+                    Filtrar por Marca:
+                </label>
+                <div id="marcasFilter" style="display: flex; gap: 0.75rem; flex-wrap: wrap;"></div>
+            </div>
+            
+            <!-- SEGUNDO: Pesquisar -->
             <div class="filter-section">
                 <div class="form-group">
                     <label for="search">Pesquisar</label>
                     <input type="text" id="search" placeholder="Código, marca, descrição..." oninput="filterPrecos()">
                 </div>
-            </div>
-            
-            <div style="margin-top: 1.5rem;">
-                <label style="display: block; margin-bottom: 1rem; font-weight: 600; color: var(--text-primary);">
-                    Filtrar por Marca:
-                </label>
-                <div id="marcasFilter" style="display: flex; gap: 0.75rem; flex-wrap: wrap;"></div>
             </div>
         </div>
 
