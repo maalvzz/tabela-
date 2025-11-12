@@ -349,12 +349,12 @@ tbody tr:hover {
     background: var(--table-hover);
 }
 
-/* Mensagens Flutuantes (Toast) */
+/* Mensagens Flutuantes (Toast com Modal) */
 .status-message {
     position: fixed;
     top: 24px;
     right: 24px;
-    padding: 16px 20px;
+    padding: 18px 24px;
     border-radius: 12px;
     font-weight: 500;
     font-size: 0.9rem;
@@ -362,11 +362,11 @@ tbody tr:hover {
     align-items: center;
     gap: 12px;
     z-index: 9999;
-    min-width: 300px;
-    max-width: 400px;
-    box-shadow: 0 8px 24px var(--shadow), 0 2px 8px rgba(0,0,0,0.1);
-    backdrop-filter: blur(10px);
-    border: 1px solid;
+    min-width: 320px;
+    max-width: 420px;
+    background: var(--bg-card);
+    box-shadow: 0 12px 40px var(--shadow), 0 4px 12px rgba(0,0,0,0.15);
+    border: 1px solid var(--border-color);
     opacity: 0;
     transform: translateX(400px);
     animation: slideInRight 0.3s ease forwards;
@@ -400,10 +400,11 @@ tbody tr:hover {
 
 .status-message::before {
     content: '';
-    width: 6px;
-    height: 6px;
+    width: 8px;
+    height: 8px;
     border-radius: 50%;
     background: currentColor;
+    flex-shrink: 0;
     animation: pulse 2s ease infinite;
 }
 
@@ -414,26 +415,35 @@ tbody tr:hover {
     }
     50% {
         opacity: 0.6;
-        transform: scale(1.2);
+        transform: scale(1.3);
     }
 }
 
 .status-message.success {
-    background: rgba(34, 197, 94, 0.95);
-    color: white;
-    border-color: rgba(34, 197, 94, 1);
+    border-left: 4px solid #22C55E;
+    color: #22C55E;
+}
+
+.status-message.success::before {
+    background: #22C55E;
 }
 
 .status-message.error {
-    background: rgba(239, 68, 68, 0.95);
-    color: white;
-    border-color: rgba(239, 68, 68, 1);
+    border-left: 4px solid #EF4444;
+    color: #EF4444;
+}
+
+.status-message.error::before {
+    background: #EF4444;
 }
 
 .status-message.info {
-    background: rgba(59, 130, 246, 0.95);
-    color: white;
-    border-color: rgba(59, 130, 246, 1);
+    border-left: 4px solid #3B82F6;
+    color: #3B82F6;
+}
+
+.status-message.info::before {
+    background: #3B82F6;
 }
 
 /* Badge */
