@@ -576,7 +576,7 @@ window.deletePreco = async function(id) {
     atualizarMarcasDisponiveis();
     renderMarcasFilter();
     filterPrecos();
-    showMessage('Registro excluído!', 'success');
+    showMessage('Registro excluído!', 'error');
 
     syncDeleteWithServer(id, deletedPreco);
 };
