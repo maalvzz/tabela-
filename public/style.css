@@ -1,5 +1,5 @@
 /* ============================================
-   VARIÁVEIS BASE (DARK THEME - PADRÃO)
+   VARIÃVEIS BASE (DARK THEME - PADRÃƒO)
    ============================================ */
 :root {
     --primary: #CC7000;
@@ -25,7 +25,7 @@
 }
 
 /* ============================================
-   LIGHT THEME (quando navegador está em light mode)
+   LIGHT THEME (quando navegador estÃ¡ em light mode)
    ============================================ */
 @media (prefers-color-scheme: light) {
     :root {
@@ -109,7 +109,7 @@ h2 {
     gap: 0.5rem;
 }
 
-/* Conexão */
+/* ConexÃ£o */
 .connection-status {
     display: flex;
     align-items: center;
@@ -138,7 +138,7 @@ h2 {
     background-color: currentColor;
 }
 
-/* Formulários e inputs */
+/* FormulÃ¡rios e inputs */
 .form-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -180,7 +180,7 @@ input:focus, select:focus, textarea:focus {
     border-color: var(--primary);
 }
 
-/* Botões */
+/* BotÃµes */
 button {
     background: var(--primary);
     color: white;
@@ -249,7 +249,7 @@ button.small {
     font-size: 0.85rem;
 }
 
-/* Botões de marca/filtro */
+/* BotÃµes de marca/filtro */
 .brand-button {
     background: var(--input-bg);
     color: var(--text-primary);
@@ -272,7 +272,7 @@ button.small {
     border-color: var(--primary);
 }
 
-/* Botões de ação */
+/* BotÃµes de aÃ§Ã£o */
 .action-btn {
     padding: 8px 12px;
     font-size: 0.85rem;
@@ -442,7 +442,7 @@ tbody tr:hover {
     background: #3B82F6;
 }
 
-/* Responsividade para notificações */
+/* Responsividade para notificaÃ§Ãµes */
 @media (max-width: 768px) {
     .status-message {
         top: 16px;
@@ -470,7 +470,7 @@ tbody tr:hover {
     border: 1px solid rgba(34, 197, 94, 0.3);
 }
 
-/* Modal de Confirmação */
+/* Modal de ConfirmaÃ§Ã£o */
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -564,7 +564,7 @@ tbody tr:hover {
     min-width: 100px;
 }
 
-/* Utilitários */
+/* UtilitÃ¡rios */
 .hidden {
     display: none !important;
 }
@@ -583,7 +583,7 @@ tbody tr:hover {
     flex-wrap: wrap;
 }
 
-/* Notificação em tempo real */
+/* NotificaÃ§Ã£o em tempo real */
 .realtime-notification {
     position: fixed;
     top: 20px;
