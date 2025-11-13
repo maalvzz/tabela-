@@ -34,7 +34,6 @@
             </div>
 
             <div class="card">
-                <!-- PRIMEIRO: Filtrar por Marca -->
                 <div style="margin-bottom: 1.5rem;">
                     <label style="display: block; margin-bottom: 1rem; font-weight: 600; color: var(--text-primary);">
                         Filtrar por Marca:
@@ -42,7 +41,6 @@
                     <div id="marcasFilter" style="display: flex; gap: 0.75rem; flex-wrap: wrap;"></div>
                 </div>
                 
-                <!-- SEGUNDO: Pesquisar -->
                 <div class="filter-section">
                     <div class="form-group">
                         <label for="search">Pesquisar</label>
@@ -59,33 +57,27 @@
     </div>
 
     <script>
-        // Detectar tema e definir logo correta antes do carregamento
-        // CORRIGIDO: Dark mode usa ESCURO, Light mode usa BRANCO
+        // Detectar tema e definir logo
         const isDarkMode = !window.matchMedia || window.matchMedia('(prefers-color-scheme: dark)').matches;
         const splashLogo = document.getElementById('splashLogo');
         
         if (isDarkMode) {
-            // Tema ESCURO = Logo ESCURO (para fundo preto)
             splashLogo.src = 'I.R.-COMERCIO-E-MATERIAIS-ELETRICOS-LTDA-ESCURO.png';
         } else {
-            // Tema CLARO = Logo BRANCO (para fundo branco)
             splashLogo.src = 'I.R.-COMERCIO-E-MATERIAIS-ELETRICOS-LTDA-BRANCO.png';
         }
 
         // Esconder splash screen após 3 segundos
         setTimeout(() => {
             const splash = document.getElementById('splashScreen');
-            if (splash) {
-                splash.style.display = 'none';
-            }
+            if (splash) splash.style.display = 'none';
         }, 3000);
 
         // Listener para mudanças de tema
         if (window.matchMedia) {
             window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
-                const newIsDark = e.matches;
                 if (splashLogo) {
-                    splashLogo.src = newIsDark 
+                    splashLogo.src = e.matches 
                         ? 'I.R.-COMERCIO-E-MATERIAIS-ELETRICOS-LTDA-ESCURO.png'
                         : 'I.R.-COMERCIO-E-MATERIAIS-ELETRICOS-LTDA-BRANCO.png';
                 }
