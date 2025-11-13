@@ -1,5 +1,5 @@
 // ==========================================
-// ======== CONFIGURAÇÃO ====================
+// ======== CONFIGURAÃ‡ÃƒO ====================
 // ==========================================
 const PORTAL_URL = 'https://ir-comercio-portal-zcan.onrender.com';
 const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -9,7 +9,7 @@ const API_URL = window.location.hostname === 'localhost' || window.location.host
 const POLLING_INTERVAL = 3000;
 
 let precos = [];
-let isOnline = null;
+let isOnline = false;
 let marcaSelecionada = 'TODAS';
 let marcasDisponiveis = new Set();
 let lastDataHash = '';
@@ -23,12 +23,12 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ==========================================
-// ======== MODAL DE CONFIRMAÇÃO ============
+// ======== MODAL DE CONFIRMAÃ‡ÃƒO ============
 // ==========================================
 function showConfirm(message, options = {}) {
     return new Promise((resolve) => {
         const {
-            title = 'Confirmação',
+            title = 'ConfirmaÃ§Ã£o',
             confirmText = 'Confirmar',
             cancelText = 'Cancelar',
             type = 'warning' // 'warning' ou 'info'
@@ -71,7 +71,7 @@ function showConfirm(message, options = {}) {
             if (e.target === modal) closeModal(false);
         });
 
-        // Adicionar animação de fade out ao CSS
+        // Adicionar animaÃ§Ã£o de fade out ao CSS
         if (!document.querySelector('#modalAnimations')) {
             const style = document.createElement('style');
             style.id = 'modalAnimations';
@@ -88,7 +88,7 @@ function showConfirm(message, options = {}) {
 }
 
 // ==========================================
-// ======== MODAL DE FORMULÁRIO =============
+// ======== MODAL DE FORMULÃRIO =============
 // ==========================================
 function showFormModal(editingId = null) {
     const isEditing = editingId !== null;
@@ -110,18 +110,18 @@ function showFormModal(editingId = null) {
                             </div>
 
                             <div class="form-group">
-                                <label for="modalCodigo">Código *</label>
-                                <input type="text" id="modalCodigo" placeholder="Código do produto" value="${preco?.codigo || ''}" required>
+                                <label for="modalCodigo">CÃ³digo *</label>
+                                <input type="text" id="modalCodigo" placeholder="CÃ³digo do produto" value="${preco?.codigo || ''}" required>
                             </div>
 
                             <div class="form-group">
-                                <label for="modalPreco">Preço (R$) *</label>
+                                <label for="modalPreco">PreÃ§o (R$) *</label>
                                 <input type="number" id="modalPreco" step="0.01" min="0" value="${preco?.preco || ''}" required>
                             </div>
 
                             <div class="form-group" style="grid-column: 1 / -1;">
-                                <label for="modalDescricao">Descrição do Produto *</label>
-                                <textarea id="modalDescricao" rows="3" placeholder="Descrição do produto..." required>${preco?.descricao || ''}</textarea>
+                                <label for="modalDescricao">DescriÃ§Ã£o do Produto *</label>
+                                <textarea id="modalDescricao" rows="3" placeholder="DescriÃ§Ã£o do produto..." required>${preco?.descricao || ''}</textarea>
                             </div>
                         </div>
 
@@ -148,7 +148,7 @@ function showFormModal(editingId = null) {
         }, 200);
     };
 
-    // Submeter formulário
+    // Submeter formulÃ¡rio
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
 
@@ -166,12 +166,12 @@ function showFormModal(editingId = null) {
         );
 
         if (codigoDuplicado) {
-            showMessage(`Erro: O código "${formData.codigo}" já está cadastrado`, 'error');
+            showMessage(`Erro: O cÃ³digo "${formData.codigo}" jÃ¡ estÃ¡ cadastrado`, 'error');
             document.getElementById('modalCodigo').focus();
             return;
         }
 
-        // Atualização instantânea na interface
+        // AtualizaÃ§Ã£o instantÃ¢nea na interface
         const tempId = editId || 'temp_' + Date.now();
         const optimisticData = { ...formData, id: tempId, timestamp: new Date().toISOString() };
 
@@ -189,7 +189,7 @@ function showFormModal(editingId = null) {
         filterPrecos();
         closeModal();
 
-        // Sincronização em segundo plano
+        // SincronizaÃ§Ã£o em segundo plano
         syncWithServer(formData, editId, tempId);
     });
 
@@ -208,7 +208,7 @@ function showFormModal(editingId = null) {
 }
 
 // ==========================================
-// ======== VERIFICAR AUTENTICAÇÃO ==========
+// ======== VERIFICAR AUTENTICAÃ‡ÃƒO ==========
 // ==========================================
 function verificarAutenticacao() {
     const urlParams = new URLSearchParams(window.location.search);
@@ -248,8 +248,8 @@ async function verificarSessaoValida() {
 
         iniciarAplicacao();
     } catch (error) {
-        console.error('Erro ao verificar sessão:', error);
-        mostrarTelaAcessoNegado('Erro ao verificar autenticação');
+        console.error('Erro ao verificar sessÃ£o:', error);
+        mostrarTelaAcessoNegado('Erro ao verificar autenticaÃ§Ã£o');
     }
 }
 
@@ -260,7 +260,7 @@ function iniciarAplicacao() {
 }
 
 // ==========================================
-// ======== VERIFICAÇÃO PERIÓDICA DE SESSÃO =
+// ======== VERIFICAÃ‡ÃƒO PERIÃ“DICA DE SESSÃƒO =
 // ==========================================
 function startSessionCheck() {
     if (sessionCheckInterval) {
@@ -280,10 +280,10 @@ function startSessionCheck() {
             if (!data.valid) {
                 clearInterval(sessionCheckInterval);
                 sessionStorage.removeItem('tabelaPrecosSession');
-                mostrarTelaAcessoNegado('Sua sessão expirou');
+                mostrarTelaAcessoNegado('Sua sessÃ£o expirou');
             }
         } catch (error) {
-            console.error('Erro ao verificar sessão:', error);
+            console.error('Erro ao verificar sessÃ£o:', error);
         }
     }, 30000); // Verifica a cada 30 segundos
 }
@@ -291,12 +291,12 @@ function startSessionCheck() {
 // ==========================================
 // ======== TELA DE ACESSO NEGADO ===========
 // ==========================================
-function mostrarTelaAcessoNegado(mensagem = 'Somente usuários autenticados podem acessar esta área') {
+function mostrarTelaAcessoNegado(mensagem = 'Somente usuÃ¡rios autenticados podem acessar esta Ã¡rea') {
     document.body.innerHTML = `
         <div style="display: flex; align-items: center; justify-content: center; min-height: 100vh; background: var(--bg-secondary); font-family: 'Inter', sans-serif;">
             <div style="text-align: center; padding: 3rem; max-width: 500px;">
-                <div style="font-size: 4rem; margin-bottom: 1.5rem; opacity: 0.3;">🔒</div>
-                <h1 style="font-size: 1.8rem; color: var(--text-primary); margin-bottom: 1rem; font-weight: 700;">NÃO AUTORIZADO</h1>
+                <div style="font-size: 4rem; margin-bottom: 1.5rem; opacity: 0.3;">ðŸ”’</div>
+                <h1 style="font-size: 1.8rem; color: var(--text-primary); margin-bottom: 1rem; font-weight: 700;">NÃƒO AUTORIZADO</h1>
                 <p style="color: var(--text-secondary); margin-bottom: 2.5rem; line-height: 1.6; font-size: 1rem;">${mensagem}</p>
                 <button onclick="voltarParaLogin()" style="padding: 1rem 2.5rem; background: var(--primary); color: white; border: none; border-radius: 12px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">
                     Ir para o Login
@@ -311,7 +311,7 @@ function voltarParaLogin() {
 }
 
 // ==========================================
-// ======== FUNÇÕES DA APLICAÇÃO ============
+// ======== FUNÃ‡Ã•ES DA APLICAÃ‡ÃƒO ============
 // ==========================================
 
 function generateHash(data) { 
@@ -344,7 +344,7 @@ async function checkForUpdates() {
 
         if (response.status === 401) {
             sessionStorage.removeItem('tabelaPrecosSession');
-            mostrarTelaAcessoNegado('Sua sessão expirou');
+            mostrarTelaAcessoNegado('Sua sessÃ£o expirou');
             return;
         }
 
@@ -360,13 +360,11 @@ async function checkForUpdates() {
             filterPrecos();
         }
     } catch (error) { 
-        console.error('Erro ao verificar atualizações:', error); 
+        console.error('Erro ao verificar atualizaÃ§Ãµes:', error); 
     }
 }
 
 async function checkServerStatus() {
-    const wasOnline = isOnline;
-    
     try {
         const response = await fetch(`${API_URL}/precos`, { 
             method: 'HEAD', 
@@ -376,32 +374,31 @@ async function checkServerStatus() {
             }
         });
         isOnline = response.ok;
-        
-        // Mostra mensagem apenas quando o status muda
-        if (wasOnline !== null && wasOnline !== isOnline) {
-            if (isOnline) {
-                showMessage('✓ Servidor online - conectado', 'success');
-            } else {
-                showMessage('✗ Servidor offline - modo local', 'error');
-            }
-        }
-        
+        updateConnectionStatus();
         return isOnline;
     } catch (error) { 
         console.error('Erro ao verificar status do servidor:', error);
-        isOnline = false;
-        
-        // Mostra mensagem apenas quando o status muda
-        if (wasOnline !== null && wasOnline !== isOnline) {
-            showMessage('✗ Servidor offline - modo local', 'error');
-        }
-        
+        isOnline = false; 
+        updateConnectionStatus(); 
         return false; 
     }
 }
 
+function updateConnectionStatus() {
+    const statusDiv = document.getElementById('connectionStatus');
+    if (!statusDiv) return;
+
+    if (isOnline) {
+        statusDiv.className = 'connection-status online';
+        statusDiv.querySelector('span:last-child').textContent = 'Online';
+    } else {
+        statusDiv.className = 'connection-status offline';
+        statusDiv.querySelector('span:last-child').textContent = 'Offline';
+    }
+}
+
 async function loadPrecos() {
-    console.log('Carregando preços...');
+    console.log('Carregando preÃ§os...');
     const serverOnline = await checkServerStatus();
     console.log('Servidor online:', serverOnline);
     
@@ -416,7 +413,7 @@ async function loadPrecos() {
 
             if (response.status === 401) {
                 sessionStorage.removeItem('tabelaPrecosSession');
-                mostrarTelaAcessoNegado('Sua sessão expirou');
+                mostrarTelaAcessoNegado('Sua sessÃ£o expirou');
                 return;
             }
             
@@ -425,7 +422,7 @@ async function loadPrecos() {
             }
             
             precos = await response.json();
-            console.log('Preços carregados:', precos.length);
+            console.log('PreÃ§os carregados:', precos.length);
             lastDataHash = generateHash(precos);
         } else { 
             precos = [];
@@ -435,7 +432,7 @@ async function loadPrecos() {
         renderMarcasFilter();
         filterPrecos();
     } catch (error) { 
-        console.error('Erro ao carregar preços:', error); 
+        console.error('Erro ao carregar preÃ§os:', error); 
         showMessage('Erro ao conectar com o servidor: ' + error.message, 'error');
         precos = []; 
         filterPrecos(); 
@@ -491,7 +488,7 @@ function toggleForm() {
 async function syncWithServer(formData, editId, tempId) {
     const serverOnline = await checkServerStatus();
     if (!serverOnline) {
-        console.log('Servidor offline. Sincronização pendente.');
+        console.log('Servidor offline. SincronizaÃ§Ã£o pendente.');
         showMessage('Salvo localmente (servidor offline)', 'info');
         return;
     }
@@ -519,7 +516,7 @@ async function syncWithServer(formData, editId, tempId) {
 
         if (response.status === 401) {
             sessionStorage.removeItem('tabelaPrecosSession');
-            mostrarTelaAcessoNegado('Sua sessão expirou');
+            mostrarTelaAcessoNegado('Sua sessÃ£o expirou');
             return;
         }
         
@@ -548,7 +545,7 @@ async function syncWithServer(formData, editId, tempId) {
         filterPrecos();
     } catch (error) {
         console.error('Erro ao sincronizar:', error);
-        // Remove o registro temporário em caso de erro
+        // Remove o registro temporÃ¡rio em caso de erro
         if (!editId) {
             precos = precos.filter(p => p.id !== tempId);
             filterPrecos();
@@ -563,7 +560,7 @@ window.editPreco = function(id) {
 
 window.deletePreco = async function(id) {
     const confirmed = await showConfirm(
-        'Tem certeza que deseja excluir este registro? Esta ação não pode ser desfeita.',
+        'Tem certeza que deseja excluir este registro? Esta aÃ§Ã£o nÃ£o pode ser desfeita.',
         {
             title: 'Excluir Registro',
             confirmText: 'Excluir',
@@ -579,7 +576,7 @@ window.deletePreco = async function(id) {
     atualizarMarcasDisponiveis();
     renderMarcasFilter();
     filterPrecos();
-    showMessage('Registro excluído!', 'error');
+    showMessage('Registro excluÃ­do!', 'error');
 
     syncDeleteWithServer(id, deletedPreco);
 };
@@ -587,7 +584,7 @@ window.deletePreco = async function(id) {
 async function syncDeleteWithServer(id, deletedPreco) {
     const serverOnline = await checkServerStatus();
     if (!serverOnline) {
-        console.log('Servidor offline. Exclusão pendente.');
+        console.log('Servidor offline. ExclusÃ£o pendente.');
         return;
     }
 
@@ -601,7 +598,7 @@ async function syncDeleteWithServer(id, deletedPreco) {
 
         if (response.status === 401) {
             sessionStorage.removeItem('tabelaPrecosSession');
-            mostrarTelaAcessoNegado('Sua sessão expirou');
+            mostrarTelaAcessoNegado('Sua sessÃ£o expirou');
             return;
         }
 
@@ -609,7 +606,7 @@ async function syncDeleteWithServer(id, deletedPreco) {
 
         lastDataHash = generateHash(precos);
     } catch (error) {
-        console.error('Erro ao sincronizar exclusão:', error);
+        console.error('Erro ao sincronizar exclusÃ£o:', error);
         if (deletedPreco) {
             precos.push(deletedPreco);
             atualizarMarcasDisponiveis();
@@ -636,7 +633,7 @@ function filterPrecos() {
         );
     }
 
-    // Ordena por marca e depois por código
+    // Ordena por marca e depois por cÃ³digo
     filtered.sort((a, b) => {
         const marcaCompare = a.marca.localeCompare(b.marca);
         if (marcaCompare !== 0) return marcaCompare;
@@ -653,16 +650,16 @@ function getTimeAgo(timestamp) {
     const past = new Date(timestamp);
     const diffInSeconds = Math.floor((now - past) / 1000);
     
-    if (diffInSeconds < 60) return `${diffInSeconds}s atrás`;
+    if (diffInSeconds < 60) return `${diffInSeconds}s atrÃ¡s`;
     
     const diffInMinutes = Math.floor(diffInSeconds / 60);
-    if (diffInMinutes < 60) return `${diffInMinutes}min atrás`;
+    if (diffInMinutes < 60) return `${diffInMinutes}min atrÃ¡s`;
     
     const diffInHours = Math.floor(diffInMinutes / 60);
-    if (diffInHours < 24) return `${diffInHours}h atrás`;
+    if (diffInHours < 24) return `${diffInHours}h atrÃ¡s`;
     
     const diffInDays = Math.floor(diffInHours / 24);
-    if (diffInDays < 7) return `${diffInDays}d atrás`;
+    if (diffInDays < 7) return `${diffInDays}d atrÃ¡s`;
     
     return past.toLocaleDateString('pt-BR');
 }
@@ -681,11 +678,11 @@ function renderPrecos(precosToRender) {
                 <thead>
                     <tr>
                         <th>Marca</th>
-                        <th>Código</th>
-                        <th>Preço</th>
-                        <th>Descrição</th>
-                        <th>Última alteração</th>
-                        <th style="text-align: center;">Ações</th>
+                        <th>CÃ³digo</th>
+                        <th>PreÃ§o</th>
+                        <th>DescriÃ§Ã£o</th>
+                        <th>Ãšltima alteraÃ§Ã£o</th>
+                        <th style="text-align: center;">AÃ§Ãµes</th>
                     </tr>
                 </thead>
                 <tbody>
