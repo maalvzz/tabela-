@@ -31,7 +31,7 @@ function showConfirm(message, options = {}) {
             title = 'Confirmação',
             confirmText = 'Confirmar',
             cancelText = 'Cancelar',
-            type = 'warning' // 'warning' ou 'info'
+            type = 'warning'
         } = options;
 
         const modalHTML = `
@@ -66,12 +66,10 @@ function showConfirm(message, options = {}) {
         confirmBtn.addEventListener('click', () => closeModal(true));
         cancelBtn.addEventListener('click', () => closeModal(false));
         
-        // Fechar ao clicar fora do modal
         modal.addEventListener('click', (e) => {
             if (e.target === modal) closeModal(false);
         });
 
-        // Adicionar animação de fade out ao CSS
         if (!document.querySelector('#modalAnimations')) {
             const style = document.createElement('style');
             style.id = 'modalAnimations';
@@ -157,7 +155,6 @@ function showFormModal(editingId = null) {
         }, 200);
     };
 
-    // Submeter formulário
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
 
@@ -165,7 +162,7 @@ function showFormModal(editingId = null) {
             marca: document.getElementById('modalMarca').value.trim(),
             codigo: document.getElementById('modalCodigo').value.trim(),
             preco: parseFloat(document.getElementById('modalPreco').value),
-            descricao: document.getElementById('modalDescricao').value.trim().toUpperCase() // Garantir CAIXA ALTA
+            descricao: document.getElementById('modalDescricao').value.trim().toUpperCase()
         };
 
         const editId = document.getElementById('modalEditId').value;
@@ -180,7 +177,6 @@ function showFormModal(editingId = null) {
             return;
         }
 
-        // Atualização instantânea na interface
         const tempId = editId || 'temp_' + Date.now();
         const optimisticData = { ...formData, id: tempId, timestamp: new Date().toISOString() };
 
@@ -198,19 +194,15 @@ function showFormModal(editingId = null) {
         filterPrecos();
         closeModal();
 
-        // Sincronização em segundo plano
         syncWithServer(formData, editId, tempId);
     });
 
-    // Cancelar
     cancelBtn.addEventListener('click', closeModal);
 
-    // Fechar ao clicar fora do modal
     modal.addEventListener('click', (e) => {
         if (e.target === modal) closeModal();
     });
 
-    // Focar no primeiro campo
     setTimeout(() => {
         document.getElementById('modalMarca').focus();
     }, 100);
@@ -243,14 +235,18 @@ function verificarAutenticacao() {
 function verificarSessaoPeriodicamente() {
     if (sessionCheckInterval) clearInterval(sessionCheckInterval);
     
+    // CORRIGIDO: Verificação a cada 5 minutos ao invés de 1 minuto para evitar sobrecarga
     sessionCheckInterval = setInterval(async () => {
-        const isValid = await verificarSessaoValida();
-        if (!isValid) {
-            clearInterval(sessionCheckInterval);
-            sessionStorage.removeItem('tabelaPrecosSession');
-            mostrarTelaAcessoNegado('Sua sessão expirou');
+        // Só verifica sessão se estiver online
+        if (isOnline) {
+            const isValid = await verificarSessaoValida();
+            if (!isValid) {
+                clearInterval(sessionCheckInterval);
+                sessionStorage.removeItem('tabelaPrecosSession');
+                mostrarTelaAcessoNegado('Sua sessão expirou');
+            }
         }
-    }, 60000); // Verifica a cada 1 minuto
+    }, 300000); // 5 minutos
 }
 
 async function verificarSessaoValida() {
@@ -263,7 +259,8 @@ async function verificarSessaoValida() {
         return response.ok;
     } catch (error) {
         console.error('Erro ao verificar sessão:', error);
-        return false;
+        // CORRIGIDO: Não considera erro de rede como sessão inválida
+        return true;
     }
 }
 
@@ -313,7 +310,6 @@ function mostrarTelaAcessoNegado(mensagem = 'Acesso negado') {
                     text-decoration: none;
                     font-weight: 600;
                     font-size: 1.05rem;
-                    transition: all 0.2s ease;
                 ">
                     Ir para o Portal
                 </a>
@@ -340,6 +336,7 @@ async function checkServerStatus() {
             }
         });
         
+        // CORRIGIDO: Só invalida sessão em 401, não em outros erros
         if (response.status === 401) {
             sessionStorage.removeItem('tabelaPrecosSession');
             mostrarTelaAcessoNegado('Sua sessão expirou');
@@ -381,6 +378,7 @@ async function loadPrecos() {
             }
         });
 
+        // CORRIGIDO: Só invalida sessão em 401
         if (response.status === 401) {
             sessionStorage.removeItem('tabelaPrecosSession');
             mostrarTelaAcessoNegado('Sua sessão expirou');
@@ -395,7 +393,6 @@ async function loadPrecos() {
         const newHash = generateHash(data);
 
         if (newHash !== lastDataHash) {
-            // Converter todas as descrições existentes para CAIXA ALTA
             precos = data.map(item => ({
                 ...item,
                 descricao: item.descricao.toUpperCase()
@@ -494,10 +491,8 @@ async function syncWithServer(formData, editId = null, tempId = null) {
         const savedData = await response.json();
         console.log('Dados salvos:', savedData);
 
-        // Garantir que a descrição salva também esteja em CAIXA ALTA
         savedData.descricao = savedData.descricao.toUpperCase();
 
-        // Atualiza com os dados reais do servidor
         if (editId) {
             const index = precos.findIndex(p => p.id === editId);
             if (index !== -1) precos[index] = savedData;
@@ -514,7 +509,6 @@ async function syncWithServer(formData, editId = null, tempId = null) {
         filterPrecos();
     } catch (error) {
         console.error('Erro ao sincronizar:', error);
-        // Remove o registro temporário em caso de erro
         if (!editId) {
             precos = precos.filter(p => p.id !== tempId);
             filterPrecos();
@@ -602,7 +596,6 @@ function filterPrecos() {
         );
     }
 
-    // Ordena por marca e depois por código
     filtered.sort((a, b) => {
         const marcaCompare = a.marca.localeCompare(b.marca);
         if (marcaCompare !== 0) return marcaCompare;
