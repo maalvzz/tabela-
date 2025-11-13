@@ -13,14 +13,12 @@
     --border-color: rgba(204, 112, 0, 0.08);
     --input-bg: #2A2A2A;
     --success-color: #22C55E;
-    --success-bg: rgba(34, 197, 94, 0.15);
     --table-stripe: #1F1F1F;
     --table-hover: rgba(128, 128, 128, 0.15);
     --card-shadow: none;
     --th-bg: #4A4A4A;
     --th-color: #FFFFFF;
     --th-border: #5A5A5A;
-    --status-border: rgba(255, 255, 255, 0.1);
     --shadow: rgba(0, 0, 0, 0.3);
     
     /* Cores específicas dos botões */
@@ -32,7 +30,7 @@
 }
 
 /* ============================================
-   LIGHT THEME (quando navegador está em light mode)
+   LIGHT THEME
    ============================================ */
 @media (prefers-color-scheme: light) {
     :root {
@@ -49,7 +47,6 @@
         --th-bg: #6B7280;
         --th-color: #FFFFFF;
         --th-border: #9CA3AF;
-        --status-border: #E5E7EB;
         --shadow: rgba(0, 0, 0, 0.08);
     }
 }
@@ -65,7 +62,6 @@ body {
     background: var(--bg-secondary);
     color: var(--text-primary);
     line-height: 1.6;
-    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* ============================================
@@ -157,12 +153,7 @@ body {
     border-radius: 12px;
     margin-bottom: 1.5rem;
     border: 1px solid var(--border-color);
-    transition: all 0.2s ease;
     box-shadow: var(--card-shadow);
-}
-
-.card:hover {
-    border-color: rgba(204, 112, 0, 0.3);
 }
 
 .header {
@@ -194,7 +185,7 @@ h2 {
 }
 
 /* ============================================
-   STATUS DE CONEXÃO MELHORADO
+   STATUS DE CONEXÃO
    ============================================ */
 .connection-status {
     display: flex;
@@ -221,7 +212,6 @@ h2 {
     height: 12px;
     border-radius: 50%;
     position: relative;
-    transition: all 0.3s ease;
 }
 
 .connection-status.online .status-dot {
@@ -287,7 +277,6 @@ input, select, textarea {
     border-radius: 8px;
     background: var(--input-bg);
     color: var(--text-primary);
-    transition: border-color 0.2s ease;
     font-size: 0.95rem;
     font-family: inherit;
 }
@@ -303,7 +292,7 @@ input:focus, select:focus, textarea:focus {
 }
 
 /* ============================================
-   BOTÕES COM CORES ESPECÍFICAS
+   BOTÕES
    ============================================ */
 button {
     background: var(--primary);
@@ -315,7 +304,6 @@ button {
     font-size: 0.95rem;
     font-weight: 600;
     margin-right: 12px;
-    transition: all 0.2s ease;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -323,12 +311,7 @@ button {
 }
 
 button:hover:not(:disabled) {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-button:active:not(:disabled) {
-    transform: translateY(0);
+    opacity: 0.9;
 }
 
 button:disabled {
@@ -343,24 +326,12 @@ button[onclick*="toggleForm"] {
     background: var(--btn-register);
 }
 
-button.register:hover:not(:disabled),
-button[onclick*="toggleForm"]:hover:not(:disabled) {
-    background: #0088dd;
-}
-
 /* Botão Excluir */
 button.danger,
 button.delete,
 button[onclick*="deletePreco"],
 .action-btn.delete {
     background: var(--btn-delete);
-}
-
-button.danger:hover:not(:disabled),
-button.delete:hover:not(:disabled),
-button[onclick*="deletePreco"]:hover:not(:disabled),
-.action-btn.delete:hover:not(:disabled) {
-    background: #ff1a1a;
 }
 
 /* Botão Editar */
@@ -370,19 +341,9 @@ button[onclick*="editPreco"],
     background: var(--btn-edit);
 }
 
-button.edit:hover:not(:disabled),
-button[onclick*="editPreco"]:hover:not(:disabled),
-.action-btn.edit:hover:not(:disabled) {
-    background: #888888;
-}
-
 /* Botão Ver */
 button.view {
     background: var(--btn-view);
-}
-
-button.view:hover:not(:disabled) {
-    background: #ff8a1a;
 }
 
 /* Botão Salvar/Atualizar/PDF */
@@ -392,18 +353,8 @@ button[type="submit"] {
     background: var(--btn-save);
 }
 
-button.success:hover:not(:disabled),
-button.save:hover:not(:disabled),
-button[type="submit"]:hover:not(:disabled) {
-    background: #00dd88;
-}
-
 button.secondary {
     background: #4B5563;
-}
-
-button.secondary:hover:not(:disabled) {
-    background: #6B7280;
 }
 
 button.small {
@@ -411,7 +362,9 @@ button.small {
     font-size: 0.85rem;
 }
 
-/* Botões de marca/filtro */
+/* ============================================
+   BOTÕES DE MARCA/FILTRO - SEM HOVER CINZA
+   ============================================ */
 .brand-button {
     background: var(--input-bg);
     color: var(--text-primary);
@@ -424,7 +377,6 @@ button.small {
 }
 
 .brand-button:hover {
-    background: var(--th-bg);
     border-color: var(--primary);
 }
 
@@ -484,7 +436,6 @@ td {
 
 tbody tr {
     background: var(--bg-card);
-    transition: background 0.2s ease;
 }
 
 tbody tr:nth-child(even) {
@@ -495,7 +446,7 @@ tbody tr:hover {
     background: var(--table-hover);
 }
 
-/* Mensagens Flutuantes (Estilo Sistema de Estoque) */
+/* Mensagens Flutuantes */
 .status-message {
     position: fixed;
     top: 24px;
@@ -681,27 +632,6 @@ tbody tr:hover {
     display: flex;
     gap: 8px;
     flex-wrap: wrap;
-}
-
-/* Notificação em tempo real */
-.realtime-notification {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background: var(--primary);
-    color: white;
-    padding: 1rem 1.5rem;
-    border-radius: 8px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    z-index: 10000;
-    opacity: 0;
-    transform: translateX(400px);
-    transition: all 0.3s ease;
-}
-
-.realtime-notification.show {
-    opacity: 1;
-    transform: translateX(0);
 }
 
 /* Responsividade */
