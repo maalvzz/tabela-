@@ -295,7 +295,7 @@ function mostrarTelaAcessoNegado(mensagem = 'Somente usuários autenticados pode
     document.body.innerHTML = `
         <div style="display: flex; align-items: center; justify-content: center; min-height: 100vh; background: var(--bg-secondary); font-family: 'Inter', sans-serif;">
             <div style="text-align: center; padding: 3rem; max-width: 500px;">
-                <h1 style="font-size: 1.8rem; color: var(--text-primary); margin-bottom: 1rem; font-weight: 700;">NãO AUTORIZADO</h1>
+                <h1 style="font-size: 1.8rem; color: var(--text-primary); margin-bottom: 1rem; font-weight: 700;">NÃO AUTORIZADO</h1>
                 <p style="color: var(--text-secondary); margin-bottom: 2.5rem; line-height: 1.6; font-size: 1rem;">${mensagem}</p>
                 <button onclick="voltarParaLogin()" style="padding: 1rem 2.5rem; background: var(--primary); color: white; border: none; border-radius: 12px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">
                     Ir para o Login
@@ -397,7 +397,7 @@ function updateConnectionStatus() {
 }
 
 async function loadPrecos() {
-    console.log('Carregando preÃ§os...');
+    console.log('Carregando preços...');
     const serverOnline = await checkServerStatus();
     console.log('Servidor online:', serverOnline);
     
@@ -421,7 +421,7 @@ async function loadPrecos() {
             }
             
             precos = await response.json();
-            console.log('PreÃ§os carregados:', precos.length);
+            console.log('Preços carregados:', precos.length);
             lastDataHash = generateHash(precos);
         } else { 
             precos = [];
@@ -431,7 +431,7 @@ async function loadPrecos() {
         renderMarcasFilter();
         filterPrecos();
     } catch (error) { 
-        console.error('Erro ao carregar preÃ§os:', error); 
+        console.error('Erro ao carregar preços:', error); 
         showMessage('Erro ao conectar com o servidor: ' + error.message, 'error');
         precos = []; 
         filterPrecos(); 
@@ -487,7 +487,7 @@ function toggleForm() {
 async function syncWithServer(formData, editId, tempId) {
     const serverOnline = await checkServerStatus();
     if (!serverOnline) {
-        console.log('Servidor offline. SincronizaÃ§Ã£o pendente.');
+        console.log('Servidor offline. Sincronização pendente.');
         showMessage('Salvo localmente (servidor offline)', 'info');
         return;
     }
@@ -515,7 +515,7 @@ async function syncWithServer(formData, editId, tempId) {
 
         if (response.status === 401) {
             sessionStorage.removeItem('tabelaPrecosSession');
-            mostrarTelaAcessoNegado('Sua sessÃ£o expirou');
+            mostrarTelaAcessoNegado('Sua sessão expirou');
             return;
         }
         
@@ -559,7 +559,7 @@ window.editPreco = function(id) {
 
 window.deletePreco = async function(id) {
     const confirmed = await showConfirm(
-        'Tem certeza que deseja excluir este registro? Esta aÃ§Ã£o nÃ£o pode ser desfeita.',
+        'Tem certeza que deseja excluir este registro? Esta ação não pode ser desfeita.',
         {
             title: 'Excluir Registro',
             confirmText: 'Excluir',
@@ -575,7 +575,7 @@ window.deletePreco = async function(id) {
     atualizarMarcasDisponiveis();
     renderMarcasFilter();
     filterPrecos();
-    showMessage('Registro excluÃ­do!', 'error');
+    showMessage('Registro excluí­do!', 'error');
 
     syncDeleteWithServer(id, deletedPreco);
 };
@@ -583,7 +583,7 @@ window.deletePreco = async function(id) {
 async function syncDeleteWithServer(id, deletedPreco) {
     const serverOnline = await checkServerStatus();
     if (!serverOnline) {
-        console.log('Servidor offline. ExclusÃ£o pendente.');
+        console.log('Servidor offline. Exclusão pendente.');
         return;
     }
 
@@ -597,7 +597,7 @@ async function syncDeleteWithServer(id, deletedPreco) {
 
         if (response.status === 401) {
             sessionStorage.removeItem('tabelaPrecosSession');
-            mostrarTelaAcessoNegado('Sua sessÃ£o expirou');
+            mostrarTelaAcessoNegado('Sua sessão expirou');
             return;
         }
 
@@ -605,7 +605,7 @@ async function syncDeleteWithServer(id, deletedPreco) {
 
         lastDataHash = generateHash(precos);
     } catch (error) {
-        console.error('Erro ao sincronizar exclusÃ£o:', error);
+        console.error('Erro ao sincronizar exclusão:', error);
         if (deletedPreco) {
             precos.push(deletedPreco);
             atualizarMarcasDisponiveis();
@@ -649,16 +649,16 @@ function getTimeAgo(timestamp) {
     const past = new Date(timestamp);
     const diffInSeconds = Math.floor((now - past) / 1000);
     
-    if (diffInSeconds < 60) return `${diffInSeconds}s atrÃ¡s`;
+    if (diffInSeconds < 60) return `${diffInSeconds}s atrás`;
     
     const diffInMinutes = Math.floor(diffInSeconds / 60);
-    if (diffInMinutes < 60) return `${diffInMinutes}min atrÃ¡s`;
+    if (diffInMinutes < 60) return `${diffInMinutes}min atrás`;
     
     const diffInHours = Math.floor(diffInMinutes / 60);
-    if (diffInHours < 24) return `${diffInHours}h atrÃ¡s`;
+    if (diffInHours < 24) return `${diffInHours}h atrás`;
     
     const diffInDays = Math.floor(diffInHours / 24);
-    if (diffInDays < 7) return `${diffInDays}d atrÃ¡s`;
+    if (diffInDays < 7) return `${diffInDays}d atrás`;
     
     return past.toLocaleDateString('pt-BR');
 }
@@ -677,11 +677,11 @@ function renderPrecos(precosToRender) {
                 <thead>
                     <tr>
                         <th>Marca</th>
-                        <th>CÃ³digo</th>
-                        <th>PreÃ§o</th>
-                        <th>DescriÃ§Ã£o</th>
-                        <th>Ãšltima alteraÃ§Ã£o</th>
-                        <th style="text-align: center;">AÃ§Ãµes</th>
+                        <th>Código</th>
+                        <th>Preço</th>
+                        <th>Descrição</th>
+                        <th>Última alteração</th>
+                        <th style="text-align: center;">Ações</th>
                     </tr>
                 </thead>
                 <tbody>
