@@ -293,7 +293,7 @@ function startSessionCheck() {
 // ==========================================
 function mostrarTelaAcessoNegado(mensagem = 'Somente usuários autenticados podem acessar esta área') {
     document.body.innerHTML = `
-        <div style="display: flex; align-items: center; justify-content: center; min-height: 100vh; background: var(--bg-secondary); font-family: 'Inter', sans-serif;">
+        <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; background: var(--bg-secondary); font-family: 'Inter', sans-serif;">
             <div style="text-align: center; padding: 3rem; max-width: 500px;">
                 <h1 style="font-size: 1.8rem; color: var(--text-primary); margin-bottom: 1rem; font-weight: 700;">NÃO AUTORIZADO</h1>
                 <p style="color: var(--text-secondary); margin-bottom: 2.5rem; line-height: 1.6; font-size: 1rem;">${mensagem}</p>
