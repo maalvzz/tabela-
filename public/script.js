@@ -111,7 +111,7 @@ function showFormModal(editingId = null) {
 
                             <div class="form-group">
                                 <label for="modalCodigo">Código *</label>
-                                <input type="text" id="modalCodigo" placeholder="CÃ³digo do produto" value="${preco?.codigo || ''}" required>
+                                <input type="text" id="modalCodigo" placeholder="Código do produto" value="${preco?.codigo || ''}" required>
                             </div>
 
                             <div class="form-group">
