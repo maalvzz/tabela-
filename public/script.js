@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
 function showConfirm(message, options = {}) {
     return new Promise((resolve) => {
         const {
-            title = 'ConfirmaÃ§Ã£o',
+            title = 'Confirmação',
             confirmText = 'Confirmar',
             cancelText = 'Cancelar',
             type = 'warning' // 'warning' ou 'info'
@@ -110,18 +110,18 @@ function showFormModal(editingId = null) {
                             </div>
 
                             <div class="form-group">
-                                <label for="modalCodigo">CÃ³digo *</label>
+                                <label for="modalCodigo">Código *</label>
                                 <input type="text" id="modalCodigo" placeholder="CÃ³digo do produto" value="${preco?.codigo || ''}" required>
                             </div>
 
                             <div class="form-group">
-                                <label for="modalPreco">PreÃ§o (R$) *</label>
+                                <label for="modalPreco">Preço (R$) *</label>
                                 <input type="number" id="modalPreco" step="0.01" min="0" value="${preco?.preco || ''}" required>
                             </div>
 
                             <div class="form-group" style="grid-column: 1 / -1;">
-                                <label for="modalDescricao">DescriÃ§Ã£o do Produto *</label>
-                                <textarea id="modalDescricao" rows="3" placeholder="DescriÃ§Ã£o do produto..." required>${preco?.descricao || ''}</textarea>
+                                <label for="modalDescricao">Descrição do Produto *</label>
+                                <textarea id="modalDescricao" rows="3" placeholder="Descrição do produto..." required>${preco?.descricao || ''}</textarea>
                             </div>
                         </div>
 
@@ -291,12 +291,12 @@ function startSessionCheck() {
 // ==========================================
 // ======== TELA DE ACESSO NEGADO ===========
 // ==========================================
-function mostrarTelaAcessoNegado(mensagem = 'Somente usuÃ¡rios autenticados podem acessar esta Ã¡rea') {
+function mostrarTelaAcessoNegado(mensagem = 'Somente usuários autenticados podem acessar esta área') {
     document.body.innerHTML = `
         <div style="display: flex; align-items: center; justify-content: center; min-height: 100vh; background: var(--bg-secondary); font-family: 'Inter', sans-serif;">
             <div style="text-align: center; padding: 3rem; max-width: 500px;">
                 <div style="font-size: 4rem; margin-bottom: 1.5rem; opacity: 0.3;">ðŸ”’</div>
-                <h1 style="font-size: 1.8rem; color: var(--text-primary); margin-bottom: 1rem; font-weight: 700;">NÃƒO AUTORIZADO</h1>
+                <h1 style="font-size: 1.8rem; color: var(--text-primary); margin-bottom: 1rem; font-weight: 700;">NãO AUTORIZADO</h1>
                 <p style="color: var(--text-secondary); margin-bottom: 2.5rem; line-height: 1.6; font-size: 1rem;">${mensagem}</p>
                 <button onclick="voltarParaLogin()" style="padding: 1rem 2.5rem; background: var(--primary); color: white; border: none; border-radius: 12px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">
                     Ir para o Login
