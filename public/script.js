@@ -291,19 +291,20 @@ function startSessionCheck() {
 // ==========================================
 // ======== TELA DE ACESSO NEGADO ===========
 // ==========================================
-function mostrarTelaAcessoNegado(mensagem = 'Somente usuários autenticados podem acessar esta área') {
+function mostrarTelaAcessoNegado(mensagem = 'Restrito a usuários autenticados') {
     document.body.innerHTML = `
-        <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; background: #F5F5F5; font-family: 'Inter', sans-serif;">
-            <div style="text-align: center; padding: 3rem; max-width: 500px;">
-                <h1 style="font-size: 1.8rem; color: #1A1A1A; margin-bottom: 1rem; font-weight: 700; text-align: center;  width: 100%;">NÃO AUTORIZADO</h1>
-                <p style="color: #6B7280; margin-bottom: 2.5rem; line-height: 1.6; font-size: 1rem;">${mensagem}</p>
-                <button onclick="voltarParaLogin()" style="padding: 1rem 2.5rem; background: #CC7000; color: white; border: none; border-radius: 12px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">
+        <div style="display: flex; align-items: center; justify-content: center; min-height: 100vh; background: linear-gradient(135deg, #F5F5F5 0%, #FFFFFF 100%); font-family: 'Inter', sans-serif;">
+            <div style="text-align: center; padding: 3rem; background: white; border-radius: 24px; box-shadow: 0 20px 60px rgba(0,0,0,0.08); max-width: 500px;">
+                <h1 style="font-size: 1.8rem; color: #1E1E1E; margin-bottom: 1rem;">NÃO AUTORIZADO</h1>
+                <p style="color: #666; margin-bottom: 2rem; line-height: 1.6;">${mensagem}</p>
+                <button onclick="voltarParaLogin()" style="padding: 1rem 2rem; background: linear-gradient(135deg, #ff5100 0%, #E67E00 100%); color: white; border: none; border-radius: 12px; font-size: 1rem; font-weight: 600; cursor: pointer; box-shadow: 0 8px 24px rgba(255, 140, 0, 0.4);">
                     Ir para o Login
                 </button>
             </div>
         </div>
     `;
 }
+
 
 function voltarParaLogin() {
     window.location.href = PORTAL_URL;
