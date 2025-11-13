@@ -43,7 +43,7 @@ function showConfirm(message, options = {}) {
                     <p class="modal-message">${message}</p>
                     <div class="modal-actions">
                         <button class="secondary" id="modalCancelBtn">${cancelText}</button>
-                        <button class="${type === 'warning' ? 'danger' : 'primary'}" id="modalConfirmBtn">${confirmText}</button>
+                        <button class="${type === 'warning' ? 'danger' : 'success'}" id="modalConfirmBtn">${confirmText}</button>
                     </div>
                 </div>
             </div>
@@ -127,7 +127,7 @@ function showFormModal(editingId = null) {
 
                         <div class="modal-actions">
                             <button type="button" class="secondary" id="modalCancelFormBtn">Cancelar</button>
-                            <button type="submit" class="primary">${isEditing ? 'Atualizar' : 'Salvar'}</button>
+                            <button type="submit" class="save">${isEditing ? 'Atualizar' : 'Salvar'}</button>
                         </div>
                     </form>
                 </div>
@@ -140,6 +140,15 @@ function showFormModal(editingId = null) {
     const modal = document.getElementById('formModal');
     const form = document.getElementById('modalPrecoForm');
     const cancelBtn = document.getElementById('modalCancelFormBtn');
+    const descricaoField = document.getElementById('modalDescricao');
+
+    // Converter descrição para CAIXA ALTA em tempo real
+    descricaoField.addEventListener('input', (e) => {
+        const start = e.target.selectionStart;
+        const end = e.target.selectionEnd;
+        e.target.value = e.target.value.toUpperCase();
+        e.target.setSelectionRange(start, end);
+    });
 
     const closeModal = () => {
         modal.style.animation = 'fadeOut 0.2s ease forwards';
@@ -156,7 +165,7 @@ function showFormModal(editingId = null) {
             marca: document.getElementById('modalMarca').value.trim(),
             codigo: document.getElementById('modalCodigo').value.trim(),
             preco: parseFloat(document.getElementById('modalPreco').value),
-            descricao: document.getElementById('modalDescricao').value.trim()
+            descricao: document.getElementById('modalDescricao').value.trim().toUpperCase() // Garantir CAIXA ALTA
         };
 
         const editId = document.getElementById('modalEditId').value;
@@ -227,119 +236,149 @@ function verificarAutenticacao() {
         return;
     }
 
-    verificarSessaoValida();
+    inicializarApp();
+    verificarSessaoPeriodicamente();
+}
+
+function verificarSessaoPeriodicamente() {
+    if (sessionCheckInterval) clearInterval(sessionCheckInterval);
+    
+    sessionCheckInterval = setInterval(async () => {
+        const isValid = await verificarSessaoValida();
+        if (!isValid) {
+            clearInterval(sessionCheckInterval);
+            sessionStorage.removeItem('tabelaPrecosSession');
+            mostrarTelaAcessoNegado('Sua sessão expirou');
+        }
+    }, 60000); // Verifica a cada 1 minuto
 }
 
 async function verificarSessaoValida() {
     try {
-        const response = await fetch(`${PORTAL_URL}/api/verify-session`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ sessionToken })
+        const response = await fetch(`${API_URL}/verify-session`, {
+            headers: {
+                'X-Session-Token': sessionToken
+            }
         });
-
-        const data = await response.json();
-
-        if (!data.valid) {
-            sessionStorage.removeItem('tabelaPrecosSession');
-            mostrarTelaAcessoNegado(data.message);
-            return;
-        }
-
-        iniciarAplicacao();
+        return response.ok;
     } catch (error) {
         console.error('Erro ao verificar sessão:', error);
-        mostrarTelaAcessoNegado('Erro ao verificar autenticação');
+        return false;
     }
 }
 
-function iniciarAplicacao() {
-    loadPrecos();
-    startRealtimeSync();
-    startSessionCheck();
-}
-
-// ==========================================
-// ======== VERIFICAÇÃO PERIÓDICA DE SESSÃO =
-// ==========================================
-function startSessionCheck() {
-    if (sessionCheckInterval) {
-        clearInterval(sessionCheckInterval);
-    }
-
-    sessionCheckInterval = setInterval(async () => {
-        try {
-            const response = await fetch(`${PORTAL_URL}/api/verify-session`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ sessionToken })
-            });
-
-            const data = await response.json();
-
-            if (!data.valid) {
-                clearInterval(sessionCheckInterval);
-                sessionStorage.removeItem('tabelaPrecosSession');
-                mostrarTelaAcessoNegado('Sua sessão expirou');
-            }
-        } catch (error) {
-            console.error('Erro ao verificar sessão:', error);
-        }
-    }, 30000); // Verifica a cada 30 segundos
-}
-
-// ==========================================
-// ======== TELA DE ACESSO NEGADO ===========
-// ==========================================
-function mostrarTelaAcessoNegado(mensagem = 'Restrito a usuários autenticados') {
+function mostrarTelaAcessoNegado(mensagem = 'Acesso negado') {
     document.body.innerHTML = `
-        <div style="display: flex; align-items: center; justify-content: center; min-height: 100vh; background: linear-gradient(135deg, #F5F5F5 0%, #FFFFFF 100%); font-family: 'Inter', sans-serif;">
-                <div style="text-align: center; padding: 3rem; background: var(--bg-primary); border-radius: 24px; box-shadow: 0 20px 60px rgba(0,0,0,0.08); max-width: 500px;">
-                <h1 style="font-size: 1.8rem; color: #1E1E1E; margin-bottom: 1rem;">NÃO AUTORIZADO</h1>
-                <p style="color: #666; margin-bottom: 2rem; line-height: 1.6;">${mensagem}</p>
-                <button onclick="voltarParaLogin()" style="padding: 1rem 2rem; background: linear-gradient(135deg, #ff5100 0%, #E67E00 100%); color: white; border: none; border-radius: 12px; font-size: 1rem; font-weight: 600; cursor: pointer; box-shadow: 0 8px 24px rgba(255, 140, 0, 0.4);">
-                    Ir para o Login
-                </button>
+        <div style="
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            text-align: center;
+            padding: 2rem;
+        ">
+            <div style="
+                background: var(--bg-card);
+                padding: 3rem;
+                border-radius: 16px;
+                border: 1px solid var(--border-color);
+                max-width: 500px;
+            ">
+                <div style="
+                    width: 80px;
+                    height: 80px;
+                    background: rgba(239, 68, 68, 0.15);
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    margin: 0 auto 2rem;
+                    font-size: 2.5rem;
+                ">
+                    🔒
+                </div>
+                <h1 style="font-size: 1.8rem; margin-bottom: 1rem;">${mensagem}</h1>
+                <p style="color: var(--text-secondary); margin-bottom: 2rem; font-size: 1.1rem;">
+                    Você precisa estar autenticado no Portal para acessar este módulo.
+                </p>
+                <a href="${PORTAL_URL}" style="
+                    display: inline-block;
+                    background: var(--btn-register);
+                    color: white;
+                    padding: 14px 32px;
+                    border-radius: 8px;
+                    text-decoration: none;
+                    font-weight: 600;
+                    font-size: 1.05rem;
+                    transition: all 0.2s ease;
+                ">
+                    Ir para o Portal
+                </a>
             </div>
         </div>
     `;
 }
 
-
-function voltarParaLogin() {
-    window.location.href = PORTAL_URL;
+function inicializarApp() {
+    checkServerStatus();
+    setInterval(checkServerStatus, 5000);
+    startPolling();
 }
 
-// ==========================================
-// ======== FUNÇÕES DA APLICAÇÃO ============
-// ==========================================
+window.toggleForm = function() {
+    showFormModal(null);
+};
 
-function generateHash(data) { 
-    return JSON.stringify(data); 
-}
-
-function startRealtimeSync() {
-    setInterval(async () => {
-        if (isOnline) await checkForUpdates();
-    }, POLLING_INTERVAL);
-    
-    // Atualiza os tempos relativos a cada 30 segundos
-    setInterval(() => {
-        if (precos.length > 0) {
-            filterPrecos();
-        }
-    }, 30000);
-}
-
-async function checkForUpdates() {
+async function checkServerStatus() {
     try {
-        const response = await fetch(`${API_URL}/precos`, { 
-            cache: 'no-cache', 
-            headers: { 
-                'Cache-Control': 'no-cache', 
-                'Pragma': 'no-cache',
+        const response = await fetch(`${API_URL}/health`, {
+            headers: {
                 'X-Session-Token': sessionToken
-            } 
+            }
+        });
+        
+        if (response.status === 401) {
+            sessionStorage.removeItem('tabelaPrecosSession');
+            mostrarTelaAcessoNegado('Sua sessão expirou');
+            return;
+        }
+
+        const wasOffline = !isOnline;
+        isOnline = response.ok;
+        
+        updateConnectionStatus();
+        
+        if (wasOffline && isOnline) {
+            console.log('Servidor voltou online. Sincronizando dados...');
+            await loadPrecos();
+        }
+    } catch (error) {
+        const wasOnline = isOnline;
+        isOnline = false;
+        updateConnectionStatus();
+        
+        if (wasOnline) {
+            console.log('Servidor offline. Modo local ativo.');
+        }
+    }
+}
+
+function updateConnectionStatus() {
+    const statusElement = document.getElementById('connectionStatus');
+    if (statusElement) {
+        statusElement.className = isOnline ? 'connection-status online' : 'connection-status offline';
+    }
+}
+
+async function loadPrecos() {
+    try {
+        const response = await fetch(`${API_URL}/precos`, {
+            headers: {
+                'X-Session-Token': sessionToken
+            }
         });
 
         if (response.status === 401) {
@@ -348,101 +387,48 @@ async function checkForUpdates() {
             return;
         }
 
-        if (!response.ok) return;
-        
-        const serverData = await response.json();
-        const newHash = generateHash(serverData);
+        if (!response.ok) {
+            throw new Error('Erro ao carregar preços');
+        }
+
+        const data = await response.json();
+        const newHash = generateHash(data);
+
         if (newHash !== lastDataHash) {
+            // Converter todas as descrições existentes para CAIXA ALTA
+            precos = data.map(item => ({
+                ...item,
+                descricao: item.descricao.toUpperCase()
+            }));
             lastDataHash = newHash;
-            precos = serverData;
             atualizarMarcasDisponiveis();
             renderMarcasFilter();
             filterPrecos();
         }
-    } catch (error) { 
-        console.error('Erro ao verificar atualizações:', error); 
+    } catch (error) {
+        console.error('Erro ao carregar preços:', error);
     }
 }
 
-async function checkServerStatus() {
-    try {
-        const response = await fetch(`${API_URL}/precos`, { 
-            method: 'HEAD', 
-            cache: 'no-cache',
-            headers: {
-                'X-Session-Token': sessionToken
-            }
-        });
-        isOnline = response.ok;
-        updateConnectionStatus();
-        return isOnline;
-    } catch (error) { 
-        console.error('Erro ao verificar status do servidor:', error);
-        isOnline = false; 
-        updateConnectionStatus(); 
-        return false; 
-    }
+function generateHash(data) {
+    return JSON.stringify(data.map(p => ({ id: p.id, timestamp: p.timestamp })));
 }
 
-function updateConnectionStatus() {
-    const statusDiv = document.getElementById('connectionStatus');
-    if (!statusDiv) return;
-
-    if (isOnline) {
-        statusDiv.className = 'connection-status online';
-        statusDiv.querySelector('span:last-child').textContent = 'Online';
-    } else {
-        statusDiv.className = 'connection-status offline';
-        statusDiv.querySelector('span:last-child').textContent = 'Offline';
-    }
-}
-
-async function loadPrecos() {
-    console.log('Carregando preços...');
-    const serverOnline = await checkServerStatus();
-    console.log('Servidor online:', serverOnline);
-    
-    try {
-        if (serverOnline) {
-            const response = await fetch(`${API_URL}/precos`, {
-                headers: {
-                    'X-Session-Token': sessionToken
-                }
-            });
-            console.log('Response status:', response.status);
-
-            if (response.status === 401) {
-                sessionStorage.removeItem('tabelaPrecosSession');
-                mostrarTelaAcessoNegado('Sua sessão expirou');
-                return;
-            }
-            
-            if (!response.ok) {
-                throw new Error(`Erro ${response.status}: ${response.statusText}`);
-            }
-            
-            precos = await response.json();
-            console.log('Preços carregados:', precos.length);
-            lastDataHash = generateHash(precos);
-        } else { 
-            precos = [];
-            console.log('Servidor offline, lista vazia');
+function startPolling() {
+    loadPrecos();
+    setInterval(async () => {
+        if (isOnline) {
+            await loadPrecos();
         }
-        atualizarMarcasDisponiveis();
-        renderMarcasFilter();
-        filterPrecos();
-    } catch (error) { 
-        console.error('Erro ao carregar preços:', error); 
-        showMessage('Erro ao conectar com o servidor: ' + error.message, 'error');
-        precos = []; 
-        filterPrecos(); 
-    }
+    }, POLLING_INTERVAL);
 }
 
 function atualizarMarcasDisponiveis() {
     marcasDisponiveis.clear();
-    precos.forEach(p => { 
-        if (p.marca && p.marca.trim()) marcasDisponiveis.add(p.marca.trim()); 
+    precos.forEach(p => {
+        if (p.marca && p.marca.trim()) {
+            marcasDisponiveis.add(p.marca.trim());
+        }
     });
 }
 
@@ -450,46 +436,26 @@ function renderMarcasFilter() {
     const container = document.getElementById('marcasFilter');
     if (!container) return;
 
-    container.innerHTML = '';
-    const btnTodas = document.createElement('button');
-    btnTodas.className = 'brand-button' + (marcaSelecionada === 'TODAS' ? ' active' : '');
-    btnTodas.textContent = 'TODAS';
-    btnTodas.onclick = () => selecionarMarca('TODAS');
-    container.appendChild(btnTodas);
+    const marcasArray = Array.from(marcasDisponiveis).sort();
 
-    Array.from(marcasDisponiveis).sort().forEach(marca => {
-        const btn = document.createElement('button');
-        btn.className = 'brand-button' + (marcaSelecionada === marca ? ' active' : '');
-        btn.textContent = marca;
-        btn.onclick = () => selecionarMarca(marca);
-        container.appendChild(btn);
-    });
+    const buttons = ['TODAS', ...marcasArray].map(marca => {
+        const isActive = marca === marcaSelecionada ? 'active' : '';
+        return `<button class="brand-button ${isActive}" onclick="window.selecionarMarca('${marca}')">${marca}</button>`;
+    }).join('');
+
+    container.innerHTML = buttons;
 }
 
-function selecionarMarca(marca) {
+window.selecionarMarca = function(marca) {
     marcaSelecionada = marca;
     renderMarcasFilter();
     filterPrecos();
-}
+};
 
-function getFormData() {
-    return {
-        marca: document.getElementById('marca').value.trim(),
-        codigo: document.getElementById('codigo').value.trim(),
-        preco: parseFloat(document.getElementById('preco').value),
-        descricao: document.getElementById('descricao').value.trim()
-    };
-}
-
-function toggleForm() {
-    showFormModal();
-}
-
-async function syncWithServer(formData, editId, tempId) {
+async function syncWithServer(formData, editId = null, tempId = null) {
     const serverOnline = await checkServerStatus();
     if (!serverOnline) {
         console.log('Servidor offline. Sincronização pendente.');
-        showMessage('Salvo localmente (servidor offline)', 'info');
         return;
     }
 
@@ -527,6 +493,9 @@ async function syncWithServer(formData, editId, tempId) {
         
         const savedData = await response.json();
         console.log('Dados salvos:', savedData);
+
+        // Garantir que a descrição salva também esteja em CAIXA ALTA
+        savedData.descricao = savedData.descricao.toUpperCase();
 
         // Atualiza com os dados reais do servidor
         if (editId) {
