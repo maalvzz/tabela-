@@ -9,7 +9,7 @@ const API_URL = window.location.hostname === 'localhost' || window.location.host
 const POLLING_INTERVAL = 3000;
 
 let precos = [];
-let isOnline = false;
+let isOnline = null;
 let marcaSelecionada = 'TODAS';
 let marcasDisponiveis = new Set();
 let lastDataHash = '';
@@ -365,6 +365,8 @@ async function checkForUpdates() {
 }
 
 async function checkServerStatus() {
+    const wasOnline = isOnline;
+    
     try {
         const response = await fetch(`${API_URL}/precos`, { 
             method: 'HEAD', 
@@ -374,26 +376,27 @@ async function checkServerStatus() {
             }
         });
         isOnline = response.ok;
-        updateConnectionStatus();
+        
+        // Mostra mensagem apenas quando o status muda
+        if (wasOnline !== null && wasOnline !== isOnline) {
+            if (isOnline) {
+                showMessage('✓ Servidor online - conectado', 'success');
+            } else {
+                showMessage('✗ Servidor offline - modo local', 'error');
+            }
+        }
+        
         return isOnline;
     } catch (error) { 
         console.error('Erro ao verificar status do servidor:', error);
-        isOnline = false; 
-        updateConnectionStatus(); 
+        isOnline = false;
+        
+        // Mostra mensagem apenas quando o status muda
+        if (wasOnline !== null && wasOnline !== isOnline) {
+            showMessage('✗ Servidor offline - modo local', 'error');
+        }
+        
         return false; 
-    }
-}
-
-function updateConnectionStatus() {
-    const statusDiv = document.getElementById('connectionStatus');
-    if (!statusDiv) return;
-
-    if (isOnline) {
-        statusDiv.className = 'connection-status online';
-        statusDiv.querySelector('span:last-child').textContent = 'Online';
-    } else {
-        statusDiv.className = 'connection-status offline';
-        statusDiv.querySelector('span:last-child').textContent = 'Offline';
     }
 }
 
