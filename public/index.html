@@ -60,13 +60,16 @@
 
     <script>
         // Detectar tema e definir logo correta antes do carregamento
+        // CORRIGIDO: Dark mode usa ESCURO, Light mode usa BRANCO
         const isDarkMode = !window.matchMedia || window.matchMedia('(prefers-color-scheme: dark)').matches;
         const splashLogo = document.getElementById('splashLogo');
         
         if (isDarkMode) {
-            splashLogo.src = 'I.R.-COMERCIO-E-MATERIAIS-ELETRICOS-LTDA-BRANCO.png';
+            // Tema ESCURO = Logo ESCURO (para fundo preto)
+            splashLogo.src = 'I.R.-COMERCIO-E-MATERIAIS-ELETRICOS-LTDA-ESCURO.png';
         } else {
-            splashLogo.src = 'I.R.-COMERCIO-E-MATERIAIS-ELETRICOS-LTDA-PRETO.png';
+            // Tema CLARO = Logo BRANCO (para fundo branco)
+            splashLogo.src = 'I.R.-COMERCIO-E-MATERIAIS-ELETRICOS-LTDA-BRANCO.png';
         }
 
         // Esconder splash screen após 3 segundos
@@ -83,8 +86,8 @@
                 const newIsDark = e.matches;
                 if (splashLogo) {
                     splashLogo.src = newIsDark 
-                        ? 'I.R.-COMERCIO-E-MATERIAIS-ELETRICOS-LTDA-BRANCO.png'
-                        : 'I.R.-COMERCIO-E-MATERIAIS-ELETRICOS-LTDA-PRETO.png';
+                        ? 'I.R.-COMERCIO-E-MATERIAIS-ELETRICOS-LTDA-ESCURO.png'
+                        : 'I.R.-COMERCIO-E-MATERIAIS-ELETRICOS-LTDA-BRANCO.png';
                 }
             });
         }
