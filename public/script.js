@@ -1,5 +1,5 @@
 // ==========================================
-// ======== CONFIGURAÃ‡ÃƒO ====================
+// ======== CONFIGURAÇÃO ====================
 // ==========================================
 const PORTAL_URL = 'https://ir-comercio-portal-zcan.onrender.com';
 const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ==========================================
-// ======== MODAL DE CONFIRMAÃ‡ÃƒO ============
+// ======== MODAL DE CONFIRMAÇÃO ============
 // ==========================================
 function showConfirm(message, options = {}) {
     return new Promise((resolve) => {
@@ -71,7 +71,7 @@ function showConfirm(message, options = {}) {
             if (e.target === modal) closeModal(false);
         });
 
-        // Adicionar animaÃ§Ã£o de fade out ao CSS
+        // Adicionar animação de fade out ao CSS
         if (!document.querySelector('#modalAnimations')) {
             const style = document.createElement('style');
             style.id = 'modalAnimations';
@@ -88,7 +88,7 @@ function showConfirm(message, options = {}) {
 }
 
 // ==========================================
-// ======== MODAL DE FORMULÃRIO =============
+// ======== MODAL DE FORMULÁRIO =============
 // ==========================================
 function showFormModal(editingId = null) {
     const isEditing = editingId !== null;
@@ -148,7 +148,7 @@ function showFormModal(editingId = null) {
         }, 200);
     };
 
-    // Submeter formulÃ¡rio
+    // Submeter formulário
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
 
@@ -166,12 +166,12 @@ function showFormModal(editingId = null) {
         );
 
         if (codigoDuplicado) {
-            showMessage(`Erro: O cÃ³digo "${formData.codigo}" jÃ¡ estÃ¡ cadastrado`, 'error');
+            showMessage(`Erro: O código "${formData.codigo}" já está cadastrado`, 'error');
             document.getElementById('modalCodigo').focus();
             return;
         }
 
-        // AtualizaÃ§Ã£o instantÃ¢nea na interface
+        // Atualização instantânea na interface
         const tempId = editId || 'temp_' + Date.now();
         const optimisticData = { ...formData, id: tempId, timestamp: new Date().toISOString() };
 
@@ -189,7 +189,7 @@ function showFormModal(editingId = null) {
         filterPrecos();
         closeModal();
 
-        // SincronizaÃ§Ã£o em segundo plano
+        // Sincronização em segundo plano
         syncWithServer(formData, editId, tempId);
     });
 
@@ -208,7 +208,7 @@ function showFormModal(editingId = null) {
 }
 
 // ==========================================
-// ======== VERIFICAR AUTENTICAÃ‡ÃƒO ==========
+// ======== VERIFICAR AUTENTICAÇÃO ==========
 // ==========================================
 function verificarAutenticacao() {
     const urlParams = new URLSearchParams(window.location.search);
@@ -248,8 +248,8 @@ async function verificarSessaoValida() {
 
         iniciarAplicacao();
     } catch (error) {
-        console.error('Erro ao verificar sessÃ£o:', error);
-        mostrarTelaAcessoNegado('Erro ao verificar autenticaÃ§Ã£o');
+        console.error('Erro ao verificar sessão:', error);
+        mostrarTelaAcessoNegado('Erro ao verificar autenticação');
     }
 }
 
@@ -260,7 +260,7 @@ function iniciarAplicacao() {
 }
 
 // ==========================================
-// ======== VERIFICAÃ‡ÃƒO PERIÃ“DICA DE SESSÃƒO =
+// ======== VERIFICAÇÃO PERIÓDICA DE SESSÃO =
 // ==========================================
 function startSessionCheck() {
     if (sessionCheckInterval) {
@@ -280,10 +280,10 @@ function startSessionCheck() {
             if (!data.valid) {
                 clearInterval(sessionCheckInterval);
                 sessionStorage.removeItem('tabelaPrecosSession');
-                mostrarTelaAcessoNegado('Sua sessÃ£o expirou');
+                mostrarTelaAcessoNegado('Sua sessão expirou');
             }
         } catch (error) {
-            console.error('Erro ao verificar sessÃ£o:', error);
+            console.error('Erro ao verificar sessão:', error);
         }
     }, 30000); // Verifica a cada 30 segundos
 }
@@ -310,7 +310,7 @@ function voltarParaLogin() {
 }
 
 // ==========================================
-// ======== FUNÃ‡Ã•ES DA APLICAÃ‡ÃƒO ============
+// ======== FUNÇÕES DA APLICAÇÃO ============
 // ==========================================
 
 function generateHash(data) { 
@@ -343,7 +343,7 @@ async function checkForUpdates() {
 
         if (response.status === 401) {
             sessionStorage.removeItem('tabelaPrecosSession');
-            mostrarTelaAcessoNegado('Sua sessÃ£o expirou');
+            mostrarTelaAcessoNegado('Sua sessão expirou');
             return;
         }
 
@@ -359,7 +359,7 @@ async function checkForUpdates() {
             filterPrecos();
         }
     } catch (error) { 
-        console.error('Erro ao verificar atualizaÃ§Ãµes:', error); 
+        console.error('Erro ao verificar atualizações:', error); 
     }
 }
 
@@ -412,7 +412,7 @@ async function loadPrecos() {
 
             if (response.status === 401) {
                 sessionStorage.removeItem('tabelaPrecosSession');
-                mostrarTelaAcessoNegado('Sua sessÃ£o expirou');
+                mostrarTelaAcessoNegado('Sua sessão expirou');
                 return;
             }
             
@@ -544,7 +544,7 @@ async function syncWithServer(formData, editId, tempId) {
         filterPrecos();
     } catch (error) {
         console.error('Erro ao sincronizar:', error);
-        // Remove o registro temporÃ¡rio em caso de erro
+        // Remove o registro temporário em caso de erro
         if (!editId) {
             precos = precos.filter(p => p.id !== tempId);
             filterPrecos();
@@ -575,7 +575,7 @@ window.deletePreco = async function(id) {
     atualizarMarcasDisponiveis();
     renderMarcasFilter();
     filterPrecos();
-    showMessage('Registro excluí­do!', 'error');
+    showMessage('Registro excluído!', 'error');
 
     syncDeleteWithServer(id, deletedPreco);
 };
@@ -632,7 +632,7 @@ function filterPrecos() {
         );
     }
 
-    // Ordena por marca e depois por cÃ³digo
+    // Ordena por marca e depois por código
     filtered.sort((a, b) => {
         const marcaCompare = a.marca.localeCompare(b.marca);
         if (marcaCompare !== 0) return marcaCompare;
@@ -711,10 +711,9 @@ function showMessage(message, type) {
     if (!messageDiv) return;
     
     messageDiv.textContent = message;
-    messageDiv.className = `status-message ${type}`;
-    messageDiv.classList.remove('hidden');
+    messageDiv.className = `status-message ${type} show`;
     
     setTimeout(() => {
-        messageDiv.classList.add('hidden');
-    }, 5000);
+        messageDiv.className = `status-message ${type}`;
+    }, 4000);
 }
