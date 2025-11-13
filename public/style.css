@@ -22,6 +22,13 @@
     --th-border: #5A5A5A;
     --status-border: rgba(255, 255, 255, 0.1);
     --shadow: rgba(0, 0, 0, 0.3);
+    
+    /* Cores específicas dos botões */
+    --btn-register: #0077c7;
+    --btn-delete: #e70000;
+    --btn-edit: #777777;
+    --btn-view: #fa7000;
+    --btn-save: #00cc77;
 }
 
 /* ============================================
@@ -59,6 +66,83 @@ body {
     color: var(--text-primary);
     line-height: 1.6;
     transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* ============================================
+   SPLASH SCREEN
+   ============================================ */
+.splash-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--bg-primary);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 99999;
+    animation: fadeOut 0.5s ease 2.5s forwards;
+}
+
+.splash-logo {
+    width: 300px;
+    max-width: 80%;
+    margin-bottom: 2rem;
+    animation: logoFloat 2s ease-in-out;
+}
+
+.splash-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.5px;
+    animation: titleFadeIn 1s ease 0.5s both;
+}
+
+@keyframes logoFloat {
+    0% {
+        opacity: 0;
+        transform: translateY(-30px);
+    }
+    50% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes titleFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeOut {
+    to {
+        opacity: 0;
+        visibility: hidden;
+    }
+}
+
+.app-content {
+    opacity: 0;
+    animation: contentFadeIn 0.5s ease 2.8s forwards;
+}
+
+@keyframes contentFadeIn {
+    to {
+        opacity: 1;
+    }
 }
 
 .container {
@@ -109,33 +193,71 @@ h2 {
     gap: 0.5rem;
 }
 
-/* Conexão */
+/* ============================================
+   STATUS DE CONEXÃO MELHORADO
+   ============================================ */
 .connection-status {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.6rem 1.2rem;
+    gap: 0.6rem;
+    padding: 0.5rem 1rem;
     border-radius: 8px;
     font-size: 0.85rem;
     font-weight: 600;
-    border: 1px solid var(--status-border);
 }
 
 .connection-status.online {
-    background: rgba(34, 197, 94, 0.15);
-    color: var(--success-color);
+    background: transparent;
+    color: var(--text-primary);
 }
 
 .connection-status.offline {
-    background: rgba(239, 68, 68, 0.15);
-    color: #EF4444;
+    background: transparent;
+    color: var(--text-primary);
 }
 
 .status-dot {
-    width: 8px;
-    height: 8px;
+    width: 12px;
+    height: 12px;
     border-radius: 50%;
-    background-color: currentColor;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.connection-status.online .status-dot {
+    background-color: #00cc77;
+    box-shadow: 0 0 0 0 rgba(0, 204, 119, 0.7);
+    animation: pulse-online 2s infinite;
+}
+
+.connection-status.offline .status-dot {
+    background-color: #e70000;
+    box-shadow: 0 0 0 0 rgba(231, 0, 0, 0.7);
+    animation: pulse-offline 2s infinite;
+}
+
+@keyframes pulse-online {
+    0% {
+        box-shadow: 0 0 0 0 rgba(0, 204, 119, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(0, 204, 119, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(0, 204, 119, 0);
+    }
+}
+
+@keyframes pulse-offline {
+    0% {
+        box-shadow: 0 0 0 0 rgba(231, 0, 0, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(231, 0, 0, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(231, 0, 0, 0);
+    }
 }
 
 /* Formulários e inputs */
@@ -180,7 +302,9 @@ input:focus, select:focus, textarea:focus {
     border-color: var(--primary);
 }
 
-/* Botões */
+/* ============================================
+   BOTÕES COM CORES ESPECÍFICAS
+   ============================================ */
 button {
     background: var(--primary);
     color: white;
@@ -191,7 +315,7 @@ button {
     font-size: 0.95rem;
     font-weight: 600;
     margin-right: 12px;
-    transition: background 0.2s ease;
+    transition: all 0.2s ease;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -199,11 +323,12 @@ button {
 }
 
 button:hover:not(:disabled) {
-    background: var(--primary-light);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 button:active:not(:disabled) {
-    background: var(--primary-dark);
+    transform: translateY(0);
 }
 
 button:disabled {
@@ -212,36 +337,73 @@ button:disabled {
     opacity: 0.5;
 }
 
+/* Botão Registrar */
+button.register,
+button[onclick*="toggleForm"] {
+    background: var(--btn-register);
+}
+
+button.register:hover:not(:disabled),
+button[onclick*="toggleForm"]:hover:not(:disabled) {
+    background: #0088dd;
+}
+
+/* Botão Excluir */
+button.danger,
+button.delete,
+button[onclick*="deletePreco"],
+.action-btn.delete {
+    background: var(--btn-delete);
+}
+
+button.danger:hover:not(:disabled),
+button.delete:hover:not(:disabled),
+button[onclick*="deletePreco"]:hover:not(:disabled),
+.action-btn.delete:hover:not(:disabled) {
+    background: #ff1a1a;
+}
+
+/* Botão Editar */
+button.edit,
+button[onclick*="editPreco"],
+.action-btn.edit {
+    background: var(--btn-edit);
+}
+
+button.edit:hover:not(:disabled),
+button[onclick*="editPreco"]:hover:not(:disabled),
+.action-btn.edit:hover:not(:disabled) {
+    background: #888888;
+}
+
+/* Botão Ver */
+button.view {
+    background: var(--btn-view);
+}
+
+button.view:hover:not(:disabled) {
+    background: #ff8a1a;
+}
+
+/* Botão Salvar/Atualizar/PDF */
+button.success,
+button.save,
+button[type="submit"] {
+    background: var(--btn-save);
+}
+
+button.success:hover:not(:disabled),
+button.save:hover:not(:disabled),
+button[type="submit"]:hover:not(:disabled) {
+    background: #00dd88;
+}
+
 button.secondary {
     background: #4B5563;
 }
 
 button.secondary:hover:not(:disabled) {
     background: #6B7280;
-}
-
-button.danger {
-    background: #DC2626;
-}
-
-button.danger:hover:not(:disabled) {
-    background: #EF4444;
-}
-
-button.edit {
-    background: #2563EB;
-}
-
-button.edit:hover:not(:disabled) {
-    background: #3B82F6;
-}
-
-button.success {
-    background: #16A34A;
-}
-
-button.success:hover:not(:disabled) {
-    background: #22C55E;
 }
 
 button.small {
@@ -282,22 +444,6 @@ button.small {
 
 .actions-cell {
     white-space: nowrap;
-}
-
-.action-btn.edit {
-    background: #2563EB;
-}
-
-.action-btn.edit:hover:not(:disabled) {
-    background: #3B82F6;
-}
-
-.action-btn.delete {
-    background: #EF4444;
-}
-
-.action-btn.delete:hover:not(:disabled) {
-    background: #DC2626;
 }
 
 /* Tabela */
@@ -572,6 +718,14 @@ tbody tr:hover {
 
     h1 {
         font-size: 1.5rem;
+    }
+
+    .splash-logo {
+        width: 250px;
+    }
+
+    .splash-title {
+        font-size: 1.4rem;
     }
 
     table {
