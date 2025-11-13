@@ -295,7 +295,7 @@ function mostrarTelaAcessoNegado(mensagem = 'Somente usuários autenticados pode
     document.body.innerHTML = `
         <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; background: #F5F5F5; font-family: 'Inter', sans-serif;">
             <div style="text-align: center; padding: 3rem; max-width: 500px;">
-                <h1 style="font-size: 1.8rem; color: #1A1A1A; margin-bottom: 1rem; font-weight: 700;">NÃO AUTORIZADO</h1>
+                <h1 style="font-size: 1.8rem; color: #1A1A1A; margin-bottom: 1rem; font-weight: 700; text-align: center;  width: 100%;">NÃO AUTORIZADO</h1>
                 <p style="color: #6B7280; margin-bottom: 2.5rem; line-height: 1.6; font-size: 1rem;">${mensagem}</p>
                 <button onclick="voltarParaLogin()" style="padding: 1rem 2.5rem; background: #CC7000; color: white; border: none; border-radius: 12px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">
                     Ir para o Login
