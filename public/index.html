@@ -8,48 +8,87 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>
-                <img src="logo.png" alt="Logo" style="height: 40px;" onerror="this.style.display='none'">
-                Tabela de Preços
-            </h1>
-            <div id="connectionStatus" class="connection-status offline">
-                <span class="status-dot"></span>
-                <span>Verificando...</span>
-            </div>
-        </div>
+    <!-- Splash Screen -->
+    <div class="splash-screen" id="splashScreen">
+        <img id="splashLogo" class="splash-logo" alt="Logo I.R. Comércio">
+        <h1 class="splash-title">Tabela de Preços</h1>
+    </div>
 
-        <div id="statusMessage" class="hidden"></div>
-
-        <div class="button-wrapper">
-            <button onclick="toggleForm()">Registrar</button>
-        </div>
-
-        <div class="card">
-            <!-- PRIMEIRO: Filtrar por Marca -->
-            <div style="margin-bottom: 1.5rem;">
-                <label style="display: block; margin-bottom: 1rem; font-weight: 600; color: var(--text-primary);">
-                    Filtrar por Marca:
-                </label>
-                <div id="marcasFilter" style="display: flex; gap: 0.75rem; flex-wrap: wrap;"></div>
-            </div>
-            
-            <!-- SEGUNDO: Pesquisar -->
-            <div class="filter-section">
-                <div class="form-group">
-                    <label for="search">Pesquisar</label>
-                    <input type="text" id="search" placeholder="Código, marca, descrição..." oninput="filterPrecos()">
+    <!-- Conteúdo Principal -->
+    <div class="app-content">
+        <div class="container">
+            <div class="header">
+                <h1>
+                    <img src="logo.png" alt="Logo" style="height: 40px;" onerror="this.style.display='none'">
+                    Tabela de Preços
+                </h1>
+                <div id="connectionStatus" class="connection-status offline">
+                    <span class="status-dot"></span>
                 </div>
             </div>
-        </div>
 
-        <div class="card">
-            <h2>Lista de Preços</h2>
-            <div id="precosContainer"></div>
+            <div id="statusMessage" class="hidden"></div>
+
+            <div class="button-wrapper">
+                <button onclick="toggleForm()" class="register">Registrar</button>
+            </div>
+
+            <div class="card">
+                <!-- PRIMEIRO: Filtrar por Marca -->
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display: block; margin-bottom: 1rem; font-weight: 600; color: var(--text-primary);">
+                        Filtrar por Marca:
+                    </label>
+                    <div id="marcasFilter" style="display: flex; gap: 0.75rem; flex-wrap: wrap;"></div>
+                </div>
+                
+                <!-- SEGUNDO: Pesquisar -->
+                <div class="filter-section">
+                    <div class="form-group">
+                        <label for="search">Pesquisar</label>
+                        <input type="text" id="search" placeholder="Código, marca, descrição..." oninput="filterPrecos()">
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Lista de Preços</h2>
+                <div id="precosContainer"></div>
+            </div>
         </div>
     </div>
 
+    <script>
+        // Detectar tema e definir logo correta antes do carregamento
+        const isDarkMode = !window.matchMedia || window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const splashLogo = document.getElementById('splashLogo');
+        
+        if (isDarkMode) {
+            splashLogo.src = 'I.R.-COMERCIO-E-MATERIAIS-ELETRICOS-LTDA-BRANCO.png';
+        } else {
+            splashLogo.src = 'I.R.-COMERCIO-E-MATERIAIS-ELETRICOS-LTDA-PRETO.png';
+        }
+
+        // Esconder splash screen após 3 segundos
+        setTimeout(() => {
+            const splash = document.getElementById('splashScreen');
+            if (splash) {
+                splash.style.display = 'none';
+            }
+        }, 3000);
+
+        // Listener para mudanças de tema
+        if (window.matchMedia) {
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+                const newIsDark = e.matches;
+                if (splashLogo) {
+                    splashLogo.src = newIsDark 
+                        ? 'I.R.-COMERCIO-E-MATERIAIS-ELETRICOS-LTDA-BRANCO.png'
+                        : 'I.R.-COMERCIO-E-MATERIAIS-ELETRICOS-LTDA-PRETO.png';
+                }
+            });
+        }
+    </script>
     <script src="script.js"></script>
 </body>
 </html>
