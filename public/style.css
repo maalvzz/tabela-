@@ -1,5 +1,5 @@
 /* ============================================
-   VARIÃVEIS BASE (DARK THEME - PADRÃƒO)
+   VARIÁVEIS BASE (DARK THEME - PADRÃO)
    ============================================ */
 :root {
     --primary: #CC7000;
@@ -25,7 +25,7 @@
 }
 
 /* ============================================
-   LIGHT THEME (quando navegador estÃ¡ em light mode)
+   LIGHT THEME (quando navegador está em light mode)
    ============================================ */
 @media (prefers-color-scheme: light) {
     :root {
@@ -109,7 +109,7 @@ h2 {
     gap: 0.5rem;
 }
 
-/* ConexÃ£o */
+/* Conexão */
 .connection-status {
     display: flex;
     align-items: center;
@@ -138,7 +138,7 @@ h2 {
     background-color: currentColor;
 }
 
-/* FormulÃ¡rios e inputs */
+/* Formulários e inputs */
 .form-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -180,7 +180,7 @@ input:focus, select:focus, textarea:focus {
     border-color: var(--primary);
 }
 
-/* BotÃµes */
+/* Botões */
 button {
     background: var(--primary);
     color: white;
@@ -249,7 +249,7 @@ button.small {
     font-size: 0.85rem;
 }
 
-/* BotÃµes de marca/filtro */
+/* Botões de marca/filtro */
 .brand-button {
     background: var(--input-bg);
     color: var(--text-primary);
@@ -272,7 +272,7 @@ button.small {
     border-color: var(--primary);
 }
 
-/* BotÃµes de aÃ§Ã£o */
+/* Botões de ação */
 .action-btn {
     padding: 8px 12px;
     font-size: 0.85rem;
@@ -349,7 +349,7 @@ tbody tr:hover {
     background: var(--table-hover);
 }
 
-/* Mensagens Flutuantes (Toast Moderno) */
+/* Mensagens Flutuantes (Estilo Sistema de Estoque) */
 .status-message {
     position: fixed;
     top: 24px;
@@ -358,100 +358,46 @@ tbody tr:hover {
     border-radius: 10px;
     font-weight: 500;
     font-size: 0.95rem;
-    line-height: 1.4;
-    display: flex;
-    align-items: center;
-    gap: 10px;
     z-index: 9999;
-    min-width: 200px;
-    max-width: 350px;
-    box-shadow: 
-        0 4px 12px rgba(0, 0, 0, 0.15),
-        0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     border: 1px solid;
-    opacity: 0;
-    transform: translateX(400px);
-    animation: slideInToast 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    display: none;
 }
 
-@keyframes slideInToast {
-    from {
+.status-message.show {
+    display: block;
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from { 
         opacity: 0;
         transform: translateX(400px);
     }
-    to {
+    to { 
         opacity: 1;
         transform: translateX(0);
     }
 }
 
-.status-message.hidden {
-    animation: slideOutToast 0.3s cubic-bezier(0.4, 0, 0.6, 1) forwards;
-}
-
-@keyframes slideOutToast {
-    from {
-        opacity: 1;
-        transform: translateX(0);
-    }
-    to {
-        opacity: 0;
-        transform: translateX(400px);
-    }
-}
-
-.status-message::before {
-    content: '';
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: currentColor;
-    flex-shrink: 0;
-}
-
-/* Sucesso - Verde */
 .status-message.success {
     background: #D1FAE5;
     color: #065F46;
     border-color: #A7F3D0;
 }
 
-.status-message.success::before {
-    background: #10B981;
-}
-
-/* Erro - Vermelho */
 .status-message.error {
     background: #FEE2E2;
     color: #991B1B;
     border-color: #FECACA;
 }
 
-.status-message.error::before {
-    background: #EF4444;
-}
-
-/* Info - Azul */
 .status-message.info {
     background: #DBEAFE;
     color: #1E40AF;
     border-color: #BFDBFE;
 }
 
-.status-message.info::before {
-    background: #3B82F6;
-}
-
-/* Responsividade para notificaÃ§Ãµes */
-@media (max-width: 768px) {
-    .status-message {
-        top: 16px;
-        right: 16px;
-        left: 16px;
-        min-width: auto;
-        max-width: none;
-    }
-}
 /* Badge */
 .badge {
     display: inline-block;
@@ -470,7 +416,7 @@ tbody tr:hover {
     border: 1px solid rgba(34, 197, 94, 0.3);
 }
 
-/* Modal de ConfirmaÃ§Ã£o */
+/* Modal de Confirmação */
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -503,6 +449,10 @@ tbody tr:hover {
     border: 1px solid var(--border-color);
     transform: scale(0.9);
     animation: scaleIn 0.2s ease forwards;
+}
+
+.modal-content.large {
+    max-width: 700px;
 }
 
 @keyframes scaleIn {
@@ -553,6 +503,10 @@ tbody tr:hover {
     margin-bottom: 2rem;
 }
 
+.modal-form-content {
+    margin-bottom: 0;
+}
+
 .modal-actions {
     display: flex;
     gap: 0.75rem;
@@ -564,7 +518,7 @@ tbody tr:hover {
     min-width: 100px;
 }
 
-/* UtilitÃ¡rios */
+/* Utilitários */
 .hidden {
     display: none !important;
 }
@@ -583,7 +537,7 @@ tbody tr:hover {
     flex-wrap: wrap;
 }
 
-/* NotificaÃ§Ã£o em tempo real */
+/* Notificação em tempo real */
 .realtime-notification {
     position: fixed;
     top: 20px;
