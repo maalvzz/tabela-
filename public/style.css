@@ -3,8 +3,6 @@
    ============================================ */
 :root {
     --primary: #CC7000;
-    --primary-light: #E68A00;
-    --primary-dark: #B36200;
     --bg-primary: #000000;
     --bg-secondary: #000000c7;
     --bg-card: #1A1A1A;
@@ -42,7 +40,6 @@
         --border-color: #E5E7EB;
         --input-bg: #F9FAFB;
         --table-stripe: #FAFAFA;
-        --table-hover: rgba(128, 128, 128, 0.15);
         --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
         --th-bg: #6B7280;
         --th-color: #FFFFFF;
@@ -65,7 +62,7 @@ body {
 }
 
 /* ============================================
-   SPLASH SCREEN
+   SPLASH SCREEN - ESPAÇAMENTO REDUZIDO
    ============================================ */
 .splash-screen {
     position: fixed;
@@ -85,7 +82,7 @@ body {
 .splash-logo {
     width: 300px;
     max-width: 80%;
-    margin-bottom: 2rem;
+    margin-bottom: 0.5rem; /* REDUZIDO de 2rem para 0.5rem */
     animation: logoFloat 2s ease-in-out;
 }
 
@@ -197,16 +194,6 @@ h2 {
     font-weight: 600;
 }
 
-.connection-status.online {
-    background: transparent;
-    color: var(--text-primary);
-}
-
-.connection-status.offline {
-    background: transparent;
-    color: var(--text-primary);
-}
-
 .status-dot {
     width: 12px;
     height: 12px;
@@ -291,9 +278,7 @@ input:focus, select:focus, textarea:focus {
     border-color: var(--primary);
 }
 
-/* ============================================
-   BOTÕES
-   ============================================ */
+/* BOTÕES */
 button {
     background: var(--primary);
     color: white;
@@ -320,36 +305,23 @@ button:disabled {
     opacity: 0.5;
 }
 
-/* Botão Registrar */
-button.register,
-button[onclick*="toggleForm"] {
+button.register, button[onclick*="toggleForm"] {
     background: var(--btn-register);
 }
 
-/* Botão Excluir */
-button.danger,
-button.delete,
-button[onclick*="deletePreco"],
-.action-btn.delete {
+button.danger, button.delete, button[onclick*="deletePreco"], .action-btn.delete {
     background: var(--btn-delete);
 }
 
-/* Botão Editar */
-button.edit,
-button[onclick*="editPreco"],
-.action-btn.edit {
+button.edit, button[onclick*="editPreco"], .action-btn.edit {
     background: var(--btn-edit);
 }
 
-/* Botão Ver */
 button.view {
     background: var(--btn-view);
 }
 
-/* Botão Salvar/Atualizar/PDF */
-button.success,
-button.save,
-button[type="submit"] {
+button.success, button.save, button[type="submit"] {
     background: var(--btn-save);
 }
 
@@ -362,9 +334,7 @@ button.small {
     font-size: 0.85rem;
 }
 
-/* ============================================
-   BOTÕES DE MARCA/FILTRO - SEM HOVER CINZA
-   ============================================ */
+/* BOTÕES DE MARCA - SEM HOVER CINZA */
 .brand-button {
     background: var(--input-bg);
     color: var(--text-primary);
@@ -386,7 +356,6 @@ button.small {
     border-color: var(--primary);
 }
 
-/* Botões de ação */
 .action-btn {
     padding: 8px 12px;
     font-size: 0.85rem;
@@ -398,11 +367,7 @@ button.small {
     white-space: nowrap;
 }
 
-/* Tabela */
-.table-container {
-    overflow-x: auto;
-}
-
+/* TABELA */
 table {
     width: 100%;
     border-collapse: separate;
@@ -446,7 +411,7 @@ tbody tr:hover {
     background: var(--table-hover);
 }
 
-/* Mensagens Flutuantes */
+/* MENSAGENS */
 .status-message {
     position: fixed;
     top: 24px;
@@ -489,31 +454,7 @@ tbody tr:hover {
     border-color: #FECACA;
 }
 
-.status-message.info {
-    background: #DBEAFE;
-    color: #1E40AF;
-    border-color: #BFDBFE;
-}
-
-/* Badge */
-.badge {
-    display: inline-block;
-    padding: 6px 14px;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    background: rgba(204, 112, 0, 0.08);
-    color: #E68A00;
-    border: 1px solid rgba(204, 112, 0, 0.15);
-}
-
-.badge.fechado {
-    background: rgba(34, 197, 94, 0.2);
-    color: var(--success-color);
-    border: 1px solid rgba(34, 197, 94, 0.3);
-}
-
-/* Modal de Confirmação */
+/* MODAL */
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -565,27 +506,6 @@ tbody tr:hover {
     margin-bottom: 1.5rem;
 }
 
-.modal-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.5rem;
-    flex-shrink: 0;
-}
-
-.modal-icon.warning {
-    background: rgba(239, 68, 68, 0.15);
-    color: #EF4444;
-}
-
-.modal-icon.info {
-    background: rgba(59, 130, 246, 0.15);
-    color: #3B82F6;
-}
-
 .modal-title {
     font-size: 1.25rem;
     font-weight: 700;
@@ -615,7 +535,7 @@ tbody tr:hover {
     min-width: 100px;
 }
 
-/* Utilitários */
+/* UTILITÁRIOS */
 .hidden {
     display: none !important;
 }
@@ -628,13 +548,7 @@ tbody tr:hover {
     margin-bottom: 1rem;
 }
 
-.actions {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-}
-
-/* Responsividade */
+/* RESPONSIVIDADE */
 @media (max-width: 768px) {
     .container {
         padding: 0 1rem;
