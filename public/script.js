@@ -1,12 +1,10 @@
-// ==========================================
-// ======== CONFIGURAÇÃO ====================
-// ==========================================
+// CONFIGURAÇÃO
 const PORTAL_URL = 'https://ir-comercio-portal-zcan.onrender.com';
 const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:3002/api'
     : `${window.location.origin}/api`;
 
-const POLLING_INTERVAL = 3000;
+const POLLING_INTERVAL = 5000; // Aumentado para 5 segundos
 
 let precos = [];
 let isOnline = false;
@@ -16,15 +14,11 @@ let lastDataHash = '';
 let sessionToken = null;
 let sessionCheckInterval = null;
 
-console.log('API URL configurada:', API_URL);
-
 document.addEventListener('DOMContentLoaded', () => {
     verificarAutenticacao();
 });
 
-// ==========================================
-// ======== MODAL DE CONFIRMAÇÃO ============
-// ==========================================
+// MODAL DE CONFIRMAÇÃO
 function showConfirm(message, options = {}) {
     return new Promise((resolve) => {
         const {
@@ -65,7 +59,6 @@ function showConfirm(message, options = {}) {
 
         confirmBtn.addEventListener('click', () => closeModal(true));
         cancelBtn.addEventListener('click', () => closeModal(false));
-        
         modal.addEventListener('click', (e) => {
             if (e.target === modal) closeModal(false);
         });
@@ -73,21 +66,13 @@ function showConfirm(message, options = {}) {
         if (!document.querySelector('#modalAnimations')) {
             const style = document.createElement('style');
             style.id = 'modalAnimations';
-            style.textContent = `
-                @keyframes fadeOut {
-                    to {
-                        opacity: 0;
-                    }
-                }
-            `;
+            style.textContent = `@keyframes fadeOut { to { opacity: 0; } }`;
             document.head.appendChild(style);
         }
     });
 }
 
-// ==========================================
-// ======== MODAL DE FORMULÁRIO =============
-// ==========================================
+// MODAL DE FORMULÁRIO
 function showFormModal(editingId = null) {
     const isEditing = editingId !== null;
     const preco = isEditing ? precos.find(p => p.id === editingId) : null;
@@ -106,23 +91,19 @@ function showFormModal(editingId = null) {
                                 <label for="modalMarca">Marca *</label>
                                 <input type="text" id="modalMarca" placeholder="Nome da marca" value="${preco?.marca || ''}" required>
                             </div>
-
                             <div class="form-group">
                                 <label for="modalCodigo">Código *</label>
                                 <input type="text" id="modalCodigo" placeholder="Código do produto" value="${preco?.codigo || ''}" required>
                             </div>
-
                             <div class="form-group">
                                 <label for="modalPreco">Preço (R$) *</label>
                                 <input type="number" id="modalPreco" step="0.01" min="0" value="${preco?.preco || ''}" required>
                             </div>
-
                             <div class="form-group" style="grid-column: 1 / -1;">
                                 <label for="modalDescricao">Descrição do Produto *</label>
                                 <textarea id="modalDescricao" rows="3" placeholder="Descrição do produto..." required>${preco?.descricao || ''}</textarea>
                             </div>
                         </div>
-
                         <div class="modal-actions">
                             <button type="button" class="secondary" id="modalCancelFormBtn">Cancelar</button>
                             <button type="submit" class="save">${isEditing ? 'Atualizar' : 'Salvar'}</button>
@@ -140,7 +121,6 @@ function showFormModal(editingId = null) {
     const cancelBtn = document.getElementById('modalCancelFormBtn');
     const descricaoField = document.getElementById('modalDescricao');
 
-    // Converter descrição para CAIXA ALTA em tempo real
     descricaoField.addEventListener('input', (e) => {
         const start = e.target.selectionStart;
         const end = e.target.selectionEnd;
@@ -150,9 +130,7 @@ function showFormModal(editingId = null) {
 
     const closeModal = () => {
         modal.style.animation = 'fadeOut 0.2s ease forwards';
-        setTimeout(() => {
-            modal.remove();
-        }, 200);
+        setTimeout(() => modal.remove(), 200);
     };
 
     form.addEventListener('submit', async (e) => {
@@ -198,19 +176,14 @@ function showFormModal(editingId = null) {
     });
 
     cancelBtn.addEventListener('click', closeModal);
-
     modal.addEventListener('click', (e) => {
         if (e.target === modal) closeModal();
     });
 
-    setTimeout(() => {
-        document.getElementById('modalMarca').focus();
-    }, 100);
+    setTimeout(() => document.getElementById('modalMarca').focus(), 100);
 }
 
-// ==========================================
-// ======== VERIFICAR AUTENTICAÇÃO ==========
-// ==========================================
+// VERIFICAR AUTENTICAÇÃO
 function verificarAutenticacao() {
     const urlParams = new URLSearchParams(window.location.search);
     const tokenFromUrl = urlParams.get('sessionToken');
@@ -235,9 +208,7 @@ function verificarAutenticacao() {
 function verificarSessaoPeriodicamente() {
     if (sessionCheckInterval) clearInterval(sessionCheckInterval);
     
-    // CORRIGIDO: Verificação a cada 5 minutos ao invés de 1 minuto para evitar sobrecarga
     sessionCheckInterval = setInterval(async () => {
-        // Só verifica sessão se estiver online
         if (isOnline) {
             const isValid = await verificarSessaoValida();
             if (!isValid) {
@@ -252,67 +223,22 @@ function verificarSessaoPeriodicamente() {
 async function verificarSessaoValida() {
     try {
         const response = await fetch(`${API_URL}/verify-session`, {
-            headers: {
-                'X-Session-Token': sessionToken
-            }
+            headers: { 'X-Session-Token': sessionToken }
         });
         return response.ok;
     } catch (error) {
-        console.error('Erro ao verificar sessão:', error);
-        // CORRIGIDO: Não considera erro de rede como sessão inválida
-        return true;
+        return true; // Não invalida sessão por erro de rede
     }
 }
 
 function mostrarTelaAcessoNegado(mensagem = 'Acesso negado') {
     document.body.innerHTML = `
-        <div style="
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            text-align: center;
-            padding: 2rem;
-        ">
-            <div style="
-                background: var(--bg-card);
-                padding: 3rem;
-                border-radius: 16px;
-                border: 1px solid var(--border-color);
-                max-width: 500px;
-            ">
-                <div style="
-                    width: 80px;
-                    height: 80px;
-                    background: rgba(239, 68, 68, 0.15);
-                    border-radius: 50%;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    margin: 0 auto 2rem;
-                    font-size: 2.5rem;
-                ">
-                    🔒
-                </div>
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: var(--bg-primary); color: var(--text-primary); text-align: center; padding: 2rem;">
+            <div style="background: var(--bg-card); padding: 3rem; border-radius: 16px; border: 1px solid var(--border-color); max-width: 500px;">
+                <div style="width: 80px; height: 80px; background: rgba(239, 68, 68, 0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 2rem; font-size: 2.5rem;">🔒</div>
                 <h1 style="font-size: 1.8rem; margin-bottom: 1rem;">${mensagem}</h1>
-                <p style="color: var(--text-secondary); margin-bottom: 2rem; font-size: 1.1rem;">
-                    Você precisa estar autenticado no Portal para acessar este módulo.
-                </p>
-                <a href="${PORTAL_URL}" style="
-                    display: inline-block;
-                    background: var(--btn-register);
-                    color: white;
-                    padding: 14px 32px;
-                    border-radius: 8px;
-                    text-decoration: none;
-                    font-weight: 600;
-                    font-size: 1.05rem;
-                ">
-                    Ir para o Portal
-                </a>
+                <p style="color: var(--text-secondary); margin-bottom: 2rem; font-size: 1.1rem;">Você precisa estar autenticado no Portal para acessar este módulo.</p>
+                <a href="${PORTAL_URL}" style="display: inline-block; background: var(--btn-register); color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 1.05rem;">Ir para o Portal</a>
             </div>
         </div>
     `;
@@ -320,7 +246,7 @@ function mostrarTelaAcessoNegado(mensagem = 'Acesso negado') {
 
 function inicializarApp() {
     checkServerStatus();
-    setInterval(checkServerStatus, 5000);
+    setInterval(checkServerStatus, 10000); // A cada 10 segundos
     startPolling();
 }
 
@@ -330,17 +256,20 @@ window.toggleForm = function() {
 
 async function checkServerStatus() {
     try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // Timeout de 5 segundos
+
         const response = await fetch(`${API_URL}/health`, {
-            headers: {
-                'X-Session-Token': sessionToken
-            }
+            headers: { 'X-Session-Token': sessionToken },
+            signal: controller.signal
         });
         
-        // CORRIGIDO: Só invalida sessão em 401, não em outros erros
+        clearTimeout(timeoutId);
+
         if (response.status === 401) {
             sessionStorage.removeItem('tabelaPrecosSession');
             mostrarTelaAcessoNegado('Sua sessão expirou');
-            return;
+            return false;
         }
 
         const wasOffline = !isOnline;
@@ -349,17 +278,14 @@ async function checkServerStatus() {
         updateConnectionStatus();
         
         if (wasOffline && isOnline) {
-            console.log('Servidor voltou online. Sincronizando dados...');
             await loadPrecos();
         }
+
+        return isOnline;
     } catch (error) {
-        const wasOnline = isOnline;
         isOnline = false;
         updateConnectionStatus();
-        
-        if (wasOnline) {
-            console.log('Servidor offline. Modo local ativo.');
-        }
+        return false;
     }
 }
 
@@ -371,23 +297,20 @@ function updateConnectionStatus() {
 }
 
 async function loadPrecos() {
+    if (!isOnline) return;
+
     try {
         const response = await fetch(`${API_URL}/precos`, {
-            headers: {
-                'X-Session-Token': sessionToken
-            }
+            headers: { 'X-Session-Token': sessionToken }
         });
 
-        // CORRIGIDO: Só invalida sessão em 401
         if (response.status === 401) {
             sessionStorage.removeItem('tabelaPrecosSession');
             mostrarTelaAcessoNegado('Sua sessão expirou');
             return;
         }
 
-        if (!response.ok) {
-            throw new Error('Erro ao carregar preços');
-        }
+        if (!response.ok) return;
 
         const data = await response.json();
         const newHash = generateHash(data);
@@ -403,7 +326,7 @@ async function loadPrecos() {
             filterPrecos();
         }
     } catch (error) {
-        console.error('Erro ao carregar preços:', error);
+        // Silencioso - erro já tratado no checkServerStatus
     }
 }
 
@@ -434,7 +357,6 @@ function renderMarcasFilter() {
     if (!container) return;
 
     const marcasArray = Array.from(marcasDisponiveis).sort();
-
     const buttons = ['TODAS', ...marcasArray].map(marca => {
         const isActive = marca === marcaSelecionada ? 'active' : '';
         return `<button class="brand-button ${isActive}" onclick="window.selecionarMarca('${marca}')">${marca}</button>`;
@@ -450,11 +372,7 @@ window.selecionarMarca = function(marca) {
 };
 
 async function syncWithServer(formData, editId = null, tempId = null) {
-    const serverOnline = await checkServerStatus();
-    if (!serverOnline) {
-        console.log('Servidor offline. Sincronização pendente.');
-        return;
-    }
+    if (!isOnline) return;
 
     try {
         let url, method;
@@ -465,8 +383,6 @@ async function syncWithServer(formData, editId = null, tempId = null) {
             url = `${API_URL}/precos`; 
             method = 'POST'; 
         }
-
-        console.log(`Sincronizando: ${method} ${url}`);
 
         const response = await fetch(url, { 
             method, 
@@ -483,14 +399,9 @@ async function syncWithServer(formData, editId = null, tempId = null) {
             return;
         }
         
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`Erro ${response.status}: ${errorText}`);
-        }
+        if (!response.ok) throw new Error(`Erro ${response.status}`);
         
         const savedData = await response.json();
-        console.log('Dados salvos:', savedData);
-
         savedData.descricao = savedData.descricao.toUpperCase();
 
         if (editId) {
@@ -498,9 +409,7 @@ async function syncWithServer(formData, editId = null, tempId = null) {
             if (index !== -1) precos[index] = savedData;
         } else {
             const tempIndex = precos.findIndex(p => p.id === tempId);
-            if (tempIndex !== -1) {
-                precos[tempIndex] = savedData;
-            }
+            if (tempIndex !== -1) precos[tempIndex] = savedData;
         }
 
         lastDataHash = generateHash(precos);
@@ -508,12 +417,11 @@ async function syncWithServer(formData, editId = null, tempId = null) {
         renderMarcasFilter();
         filterPrecos();
     } catch (error) {
-        console.error('Erro ao sincronizar:', error);
         if (!editId) {
             precos = precos.filter(p => p.id !== tempId);
             filterPrecos();
         }
-        showMessage('Erro ao salvar no servidor: ' + error.message, 'error');
+        showMessage('Erro ao salvar no servidor', 'error');
     }
 }
 
@@ -545,18 +453,12 @@ window.deletePreco = async function(id) {
 };
 
 async function syncDeleteWithServer(id, deletedPreco) {
-    const serverOnline = await checkServerStatus();
-    if (!serverOnline) {
-        console.log('Servidor offline. Exclusão pendente.');
-        return;
-    }
+    if (!isOnline) return;
 
     try {
         const response = await fetch(`${API_URL}/precos/${id}`, { 
             method: 'DELETE',
-            headers: {
-                'X-Session-Token': sessionToken
-            }
+            headers: { 'X-Session-Token': sessionToken }
         });
 
         if (response.status === 401) {
@@ -569,7 +471,6 @@ async function syncDeleteWithServer(id, deletedPreco) {
 
         lastDataHash = generateHash(precos);
     } catch (error) {
-        console.error('Erro ao sincronizar exclusão:', error);
         if (deletedPreco) {
             precos.push(deletedPreco);
             atualizarMarcasDisponiveis();
