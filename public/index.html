@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tabela de Preços</title>
-    <link rel="icon" type="png" href="I.R.-COMERCIO-E-MATERIAIS-ELETRICOS-PRETO.png">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -18,10 +17,7 @@
     <div class="app-content">
         <div class="container">
             <div class="header">
-                <h1>
-                    <img src="logo.png" alt="Logo" style="height: 40px;" onerror="this.style.display='none'">
-                    Tabela de Preços
-                </h1>
+                <h1>Tabela de Preços</h1>
                 <div id="connectionStatus" class="connection-status offline">
                     <span class="status-dot"></span>
                 </div>
@@ -67,7 +63,13 @@
             splashLogo.src = 'I.R.-COMERCIO-E-MATERIAIS-ELETRICOS-LTDA-BRANCO.png';
         }
 
-        // Esconder splash screen após 3 segundos
+        // Tratamento de erro na logo
+        splashLogo.onerror = function() {
+            console.log('❌ Erro ao carregar logo');
+            this.style.display = 'none';
+        };
+
+        // Esconder splash após 3 segundos
         setTimeout(() => {
             const splash = document.getElementById('splashScreen');
             if (splash) splash.style.display = 'none';
