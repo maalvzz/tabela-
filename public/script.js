@@ -4,29 +4,23 @@ const API_URL = window.location.hostname === 'localhost' || window.location.host
     ? 'http://localhost:3002/api'
     : `${window.location.origin}/api`;
 
-const POLLING_INTERVAL = 5000; // Aumentado para 5 segundos
-
 let precos = [];
 let isOnline = false;
 let marcaSelecionada = 'TODAS';
 let marcasDisponiveis = new Set();
 let lastDataHash = '';
 let sessionToken = null;
-let sessionCheckInterval = null;
+
+console.log('🚀 Iniciando aplicação...');
+console.log('📍 API URL:', API_URL);
 
 document.addEventListener('DOMContentLoaded', () => {
     verificarAutenticacao();
 });
 
-// MODAL DE CONFIRMAÇÃO
 function showConfirm(message, options = {}) {
     return new Promise((resolve) => {
-        const {
-            title = 'Confirmação',
-            confirmText = 'Confirmar',
-            cancelText = 'Cancelar',
-            type = 'warning'
-        } = options;
+        const { title = 'Confirmação', confirmText = 'Confirmar', cancelText = 'Cancelar', type = 'warning' } = options;
 
         const modalHTML = `
             <div class="modal-overlay" id="confirmModal">
@@ -44,24 +38,18 @@ function showConfirm(message, options = {}) {
         `;
 
         document.body.insertAdjacentHTML('beforeend', modalHTML);
-
         const modal = document.getElementById('confirmModal');
         const confirmBtn = document.getElementById('modalConfirmBtn');
         const cancelBtn = document.getElementById('modalCancelBtn');
 
         const closeModal = (result) => {
             modal.style.animation = 'fadeOut 0.2s ease forwards';
-            setTimeout(() => {
-                modal.remove();
-                resolve(result);
-            }, 200);
+            setTimeout(() => { modal.remove(); resolve(result); }, 200);
         };
 
         confirmBtn.addEventListener('click', () => closeModal(true));
         cancelBtn.addEventListener('click', () => closeModal(false));
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) closeModal(false);
-        });
+        modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(false); });
 
         if (!document.querySelector('#modalAnimations')) {
             const style = document.createElement('style');
@@ -72,7 +60,6 @@ function showConfirm(message, options = {}) {
     });
 }
 
-// MODAL DE FORMULÁRIO
 function showFormModal(editingId = null) {
     const isEditing = editingId !== null;
     const preco = isEditing ? precos.find(p => p.id === editingId) : null;
@@ -89,19 +76,19 @@ function showFormModal(editingId = null) {
                         <div class="form-grid">
                             <div class="form-group">
                                 <label for="modalMarca">Marca *</label>
-                                <input type="text" id="modalMarca" placeholder="Nome da marca" value="${preco?.marca || ''}" required>
+                                <input type="text" id="modalMarca" value="${preco?.marca || ''}" required>
                             </div>
                             <div class="form-group">
                                 <label for="modalCodigo">Código *</label>
-                                <input type="text" id="modalCodigo" placeholder="Código do produto" value="${preco?.codigo || ''}" required>
+                                <input type="text" id="modalCodigo" value="${preco?.codigo || ''}" required>
                             </div>
                             <div class="form-group">
                                 <label for="modalPreco">Preço (R$) *</label>
                                 <input type="number" id="modalPreco" step="0.01" min="0" value="${preco?.preco || ''}" required>
                             </div>
                             <div class="form-group" style="grid-column: 1 / -1;">
-                                <label for="modalDescricao">Descrição do Produto *</label>
-                                <textarea id="modalDescricao" rows="3" placeholder="Descrição do produto..." required>${preco?.descricao || ''}</textarea>
+                                <label for="modalDescricao">Descrição *</label>
+                                <textarea id="modalDescricao" rows="3" required>${preco?.descricao || ''}</textarea>
                             </div>
                         </div>
                         <div class="modal-actions">
@@ -115,7 +102,6 @@ function showFormModal(editingId = null) {
     `;
 
     document.body.insertAdjacentHTML('beforeend', modalHTML);
-
     const modal = document.getElementById('formModal');
     const form = document.getElementById('modalPrecoForm');
     const cancelBtn = document.getElementById('modalCancelFormBtn');
@@ -123,9 +109,8 @@ function showFormModal(editingId = null) {
 
     descricaoField.addEventListener('input', (e) => {
         const start = e.target.selectionStart;
-        const end = e.target.selectionEnd;
         e.target.value = e.target.value.toUpperCase();
-        e.target.setSelectionRange(start, end);
+        e.target.setSelectionRange(start, start);
     });
 
     const closeModal = () => {
@@ -144,14 +129,10 @@ function showFormModal(editingId = null) {
         };
 
         const editId = document.getElementById('modalEditId').value;
-
-        const codigoDuplicado = precos.find(p => 
-            p.codigo.toLowerCase() === formData.codigo.toLowerCase() && p.id !== editId
-        );
+        const codigoDuplicado = precos.find(p => p.codigo.toLowerCase() === formData.codigo.toLowerCase() && p.id !== editId);
 
         if (codigoDuplicado) {
-            showMessage(`Erro: O código "${formData.codigo}" já está cadastrado`, 'error');
-            document.getElementById('modalCodigo').focus();
+            showMessage(`Código "${formData.codigo}" já existe`, 'error');
             return;
         }
 
@@ -161,29 +142,24 @@ function showFormModal(editingId = null) {
         if (editId) {
             const index = precos.findIndex(p => p.id === editId);
             if (index !== -1) precos[index] = optimisticData;
-            showMessage('Registro atualizado!', 'success');
+            showMessage('Atualizado!', 'success');
         } else {
             precos.push(optimisticData);
-            showMessage('Registro criado!', 'success');
+            showMessage('Criado!', 'success');
         }
 
         atualizarMarcasDisponiveis();
         renderMarcasFilter();
         filterPrecos();
         closeModal();
-
         syncWithServer(formData, editId, tempId);
     });
 
     cancelBtn.addEventListener('click', closeModal);
-    modal.addEventListener('click', (e) => {
-        if (e.target === modal) closeModal();
-    });
-
+    modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
     setTimeout(() => document.getElementById('modalMarca').focus(), 100);
 }
 
-// VERIFICAR AUTENTICAÇÃO
 function verificarAutenticacao() {
     const urlParams = new URLSearchParams(window.location.search);
     const tokenFromUrl = urlParams.get('sessionToken');
@@ -197,38 +173,13 @@ function verificarAutenticacao() {
     }
 
     if (!sessionToken) {
+        console.log('❌ Sem token de sessão');
         mostrarTelaAcessoNegado();
         return;
     }
 
+    console.log('✅ Token encontrado');
     inicializarApp();
-    verificarSessaoPeriodicamente();
-}
-
-function verificarSessaoPeriodicamente() {
-    if (sessionCheckInterval) clearInterval(sessionCheckInterval);
-    
-    sessionCheckInterval = setInterval(async () => {
-        if (isOnline) {
-            const isValid = await verificarSessaoValida();
-            if (!isValid) {
-                clearInterval(sessionCheckInterval);
-                sessionStorage.removeItem('tabelaPrecosSession');
-                mostrarTelaAcessoNegado('Sua sessão expirou');
-            }
-        }
-    }, 300000); // 5 minutos
-}
-
-async function verificarSessaoValida() {
-    try {
-        const response = await fetch(`${API_URL}/verify-session`, {
-            headers: { 'X-Session-Token': sessionToken }
-        });
-        return response.ok;
-    } catch (error) {
-        return true; // Não invalida sessão por erro de rede
-    }
 }
 
 function mostrarTelaAcessoNegado(mensagem = 'Acesso negado') {
@@ -237,16 +188,17 @@ function mostrarTelaAcessoNegado(mensagem = 'Acesso negado') {
             <div style="background: var(--bg-card); padding: 3rem; border-radius: 16px; border: 1px solid var(--border-color); max-width: 500px;">
                 <div style="width: 80px; height: 80px; background: rgba(239, 68, 68, 0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 2rem; font-size: 2.5rem;">🔒</div>
                 <h1 style="font-size: 1.8rem; margin-bottom: 1rem;">${mensagem}</h1>
-                <p style="color: var(--text-secondary); margin-bottom: 2rem; font-size: 1.1rem;">Você precisa estar autenticado no Portal para acessar este módulo.</p>
-                <a href="${PORTAL_URL}" style="display: inline-block; background: var(--btn-register); color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 1.05rem;">Ir para o Portal</a>
+                <p style="color: var(--text-secondary); margin-bottom: 2rem;">Você precisa estar autenticado no Portal.</p>
+                <a href="${PORTAL_URL}" style="display: inline-block; background: var(--btn-register); color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600;">Ir para o Portal</a>
             </div>
         </div>
     `;
 }
 
 function inicializarApp() {
+    console.log('🔄 Inicializando aplicação...');
     checkServerStatus();
-    setInterval(checkServerStatus, 10000); // A cada 10 segundos
+    setInterval(checkServerStatus, 15000); // A cada 15 segundos
     startPolling();
 }
 
@@ -256,10 +208,13 @@ window.toggleForm = function() {
 
 async function checkServerStatus() {
     try {
+        console.log('🔍 Verificando servidor...');
+        
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000); // Timeout de 5 segundos
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 segundos
 
-        const response = await fetch(`${API_URL}/health`, {
+        const response = await fetch(`${API_URL}/precos`, {
+            method: 'HEAD',
             headers: { 'X-Session-Token': sessionToken },
             signal: controller.signal
         });
@@ -267,6 +222,7 @@ async function checkServerStatus() {
         clearTimeout(timeoutId);
 
         if (response.status === 401) {
+            console.log('❌ Sessão expirou');
             sessionStorage.removeItem('tabelaPrecosSession');
             mostrarTelaAcessoNegado('Sua sessão expirou');
             return false;
@@ -275,14 +231,17 @@ async function checkServerStatus() {
         const wasOffline = !isOnline;
         isOnline = response.ok;
         
+        console.log(isOnline ? '✅ Servidor ONLINE' : '❌ Servidor OFFLINE');
         updateConnectionStatus();
         
         if (wasOffline && isOnline) {
+            console.log('🔄 Sincronizando dados...');
             await loadPrecos();
         }
 
         return isOnline;
     } catch (error) {
+        console.log('❌ Erro ao verificar servidor:', error.message);
         isOnline = false;
         updateConnectionStatus();
         return false;
@@ -297,58 +256,57 @@ function updateConnectionStatus() {
 }
 
 async function loadPrecos() {
-    if (!isOnline) return;
+    if (!isOnline) {
+        console.log('⚠️ Offline - não carregando dados');
+        return;
+    }
 
     try {
+        console.log('📥 Carregando preços...');
         const response = await fetch(`${API_URL}/precos`, {
             headers: { 'X-Session-Token': sessionToken }
         });
 
         if (response.status === 401) {
+            console.log('❌ Sessão expirou durante carregamento');
             sessionStorage.removeItem('tabelaPrecosSession');
             mostrarTelaAcessoNegado('Sua sessão expirou');
             return;
         }
 
-        if (!response.ok) return;
+        if (!response.ok) {
+            console.log('❌ Erro ao carregar:', response.status);
+            return;
+        }
 
         const data = await response.json();
-        const newHash = generateHash(data);
+        console.log(`✅ ${data.length} preços carregados`);
+        
+        const newHash = JSON.stringify(data.map(p => p.id));
 
         if (newHash !== lastDataHash) {
-            precos = data.map(item => ({
-                ...item,
-                descricao: item.descricao.toUpperCase()
-            }));
+            precos = data.map(item => ({ ...item, descricao: item.descricao.toUpperCase() }));
             lastDataHash = newHash;
             atualizarMarcasDisponiveis();
             renderMarcasFilter();
             filterPrecos();
         }
     } catch (error) {
-        // Silencioso - erro já tratado no checkServerStatus
+        console.log('❌ Erro ao carregar preços:', error.message);
     }
-}
-
-function generateHash(data) {
-    return JSON.stringify(data.map(p => ({ id: p.id, timestamp: p.timestamp })));
 }
 
 function startPolling() {
     loadPrecos();
-    setInterval(async () => {
-        if (isOnline) {
-            await loadPrecos();
-        }
-    }, POLLING_INTERVAL);
+    setInterval(() => {
+        if (isOnline) loadPrecos();
+    }, 8000); // A cada 8 segundos
 }
 
 function atualizarMarcasDisponiveis() {
     marcasDisponiveis.clear();
     precos.forEach(p => {
-        if (p.marca && p.marca.trim()) {
-            marcasDisponiveis.add(p.marca.trim());
-        }
+        if (p.marca && p.marca.trim()) marcasDisponiveis.add(p.marca.trim());
     });
 }
 
@@ -375,21 +333,12 @@ async function syncWithServer(formData, editId = null, tempId = null) {
     if (!isOnline) return;
 
     try {
-        let url, method;
-        if (editId) { 
-            url = `${API_URL}/precos/${editId}`; 
-            method = 'PUT'; 
-        } else { 
-            url = `${API_URL}/precos`; 
-            method = 'POST'; 
-        }
+        const url = editId ? `${API_URL}/precos/${editId}` : `${API_URL}/precos`;
+        const method = editId ? 'PUT' : 'POST';
 
         const response = await fetch(url, { 
             method, 
-            headers: { 
-                'Content-Type': 'application/json',
-                'X-Session-Token': sessionToken
-            }, 
+            headers: { 'Content-Type': 'application/json', 'X-Session-Token': sessionToken }, 
             body: JSON.stringify(formData) 
         });
 
@@ -412,16 +361,17 @@ async function syncWithServer(formData, editId = null, tempId = null) {
             if (tempIndex !== -1) precos[tempIndex] = savedData;
         }
 
-        lastDataHash = generateHash(precos);
+        lastDataHash = JSON.stringify(precos.map(p => p.id));
         atualizarMarcasDisponiveis();
         renderMarcasFilter();
         filterPrecos();
     } catch (error) {
+        console.log('❌ Erro ao sincronizar:', error.message);
         if (!editId) {
             precos = precos.filter(p => p.id !== tempId);
             filterPrecos();
         }
-        showMessage('Erro ao salvar no servidor', 'error');
+        showMessage('Erro ao salvar', 'error');
     }
 }
 
@@ -430,15 +380,12 @@ window.editPreco = function(id) {
 };
 
 window.deletePreco = async function(id) {
-    const confirmed = await showConfirm(
-        'Tem certeza que deseja excluir este registro? Esta ação não pode ser desfeita.',
-        {
-            title: 'Excluir Registro',
-            confirmText: 'Excluir',
-            cancelText: 'Cancelar',
-            type: 'warning'
-        }
-    );
+    const confirmed = await showConfirm('Tem certeza que deseja excluir?', {
+        title: 'Excluir Registro',
+        confirmText: 'Excluir',
+        cancelText: 'Cancelar',
+        type: 'warning'
+    });
 
     if (!confirmed) return;
 
@@ -447,39 +394,34 @@ window.deletePreco = async function(id) {
     atualizarMarcasDisponiveis();
     renderMarcasFilter();
     filterPrecos();
-    showMessage('Registro excluído!', 'error');
+    showMessage('Excluído!', 'error');
 
-    syncDeleteWithServer(id, deletedPreco);
-};
+    if (isOnline) {
+        try {
+            const response = await fetch(`${API_URL}/precos/${id}`, { 
+                method: 'DELETE',
+                headers: { 'X-Session-Token': sessionToken }
+            });
 
-async function syncDeleteWithServer(id, deletedPreco) {
-    if (!isOnline) return;
+            if (response.status === 401) {
+                sessionStorage.removeItem('tabelaPrecosSession');
+                mostrarTelaAcessoNegado('Sua sessão expirou');
+                return;
+            }
 
-    try {
-        const response = await fetch(`${API_URL}/precos/${id}`, { 
-            method: 'DELETE',
-            headers: { 'X-Session-Token': sessionToken }
-        });
-
-        if (response.status === 401) {
-            sessionStorage.removeItem('tabelaPrecosSession');
-            mostrarTelaAcessoNegado('Sua sessão expirou');
-            return;
-        }
-
-        if (!response.ok) throw new Error('Erro ao deletar');
-
-        lastDataHash = generateHash(precos);
-    } catch (error) {
-        if (deletedPreco) {
-            precos.push(deletedPreco);
-            atualizarMarcasDisponiveis();
-            renderMarcasFilter();
-            filterPrecos();
-            showMessage('Erro ao excluir no servidor', 'error');
+            if (!response.ok) throw new Error('Erro ao deletar');
+        } catch (error) {
+            console.log('❌ Erro ao deletar:', error.message);
+            if (deletedPreco) {
+                precos.push(deletedPreco);
+                atualizarMarcasDisponiveis();
+                renderMarcasFilter();
+                filterPrecos();
+                showMessage('Erro ao excluir', 'error');
+            }
         }
     }
-}
+};
 
 function filterPrecos() {
     const searchTerm = document.getElementById('search').value.toLowerCase();
@@ -500,7 +442,7 @@ function filterPrecos() {
     filtered.sort((a, b) => {
         const marcaCompare = a.marca.localeCompare(b.marca);
         if (marcaCompare !== 0) return marcaCompare;
-        return a.codigo.localeCompare(b.codigo, undefined, { numeric: true, sensitivity: 'base' });
+        return a.codigo.localeCompare(b.codigo, undefined, { numeric: true });
     });
 
     renderPrecos(filtered);
@@ -508,22 +450,16 @@ function filterPrecos() {
 
 function getTimeAgo(timestamp) {
     if (!timestamp) return 'Sem data';
-    
     const now = new Date();
     const past = new Date(timestamp);
     const diffInSeconds = Math.floor((now - past) / 1000);
-    
-    if (diffInSeconds < 60) return `${diffInSeconds}s atrás`;
-    
+    if (diffInSeconds < 60) return `${diffInSeconds}s`;
     const diffInMinutes = Math.floor(diffInSeconds / 60);
-    if (diffInMinutes < 60) return `${diffInMinutes}min atrás`;
-    
+    if (diffInMinutes < 60) return `${diffInMinutes}min`;
     const diffInHours = Math.floor(diffInMinutes / 60);
-    if (diffInHours < 24) return `${diffInHours}h atrás`;
-    
+    if (diffInHours < 24) return `${diffInHours}h`;
     const diffInDays = Math.floor(diffInHours / 24);
-    if (diffInDays < 7) return `${diffInDays}d atrás`;
-    
+    if (diffInDays < 7) return `${diffInDays}d`;
     return past.toLocaleDateString('pt-BR');
 }
 
@@ -544,7 +480,7 @@ function renderPrecos(precosToRender) {
                         <th>Código</th>
                         <th>Preço</th>
                         <th>Descrição</th>
-                        <th>Última alteração</th>
+                        <th>Alteração</th>
                         <th style="text-align: center;">Ações</th>
                     </tr>
                 </thead>
@@ -573,11 +509,7 @@ function renderPrecos(precosToRender) {
 function showMessage(message, type) {
     const messageDiv = document.getElementById('statusMessage');
     if (!messageDiv) return;
-    
     messageDiv.textContent = message;
     messageDiv.className = `status-message ${type} show`;
-    
-    setTimeout(() => {
-        messageDiv.className = `status-message ${type}`;
-    }, 4000);
+    setTimeout(() => { messageDiv.className = `status-message ${type}`; }, 3000);
 }
