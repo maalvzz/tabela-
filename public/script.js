@@ -182,16 +182,40 @@ function verificarAutenticacao() {
 
 function mostrarTelaAcessoNegado(mensagem = 'Acesso negado') {
     document.body.innerHTML = `
-        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: var(--bg-primary); color: var(--text-primary); text-align: center; padding: 2rem;">
-            <div style="background: var(--bg-card); padding: 3rem; border-radius: 16px; border: 1px solid var(--border-color); max-width: 500px;">
-                <div style="width: 80px; height: 80px; background: rgba(239, 68, 68, 0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 2rem; font-size: 2.5rem;">🔒</div>
-                <h1 style="font-size: 1.8rem; margin-bottom: 1rem;">${mensagem}</h1>
-                <p style="color: var(--text-secondary); margin-bottom: 2rem;">Você precisa estar autenticado no Portal.</p>
-                <a href="${PORTAL_URL}" style="display: inline-block; background: var(--btn-register); color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600;">Ir para o Portal</a>
-            </div>
+        <div style="
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            text-align: center;
+            padding: 2rem;
+        ">
+            
+            <h1 style="font-size: 2.2rem; margin-bottom: 1rem;">
+                ${mensagem}
+            </h1>
+
+            <p style="color: var(--text-secondary); margin-bottom: 2rem;">
+                Você precisa estar autenticado no Portal.
+            </p>
+
+            <a href="${PORTAL_URL}" style="
+                display: inline-block;
+                background: var(--btn-register);
+                color: white;
+                padding: 14px 32px;
+                border-radius: 8px;
+                text-decoration: none;
+                font-weight: 600;
+            ">Ir para o Portal</a>
         </div>
     `;
 }
+
+
 
 function inicializarApp() {
     checkServerStatus();
