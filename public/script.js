@@ -11,8 +11,8 @@ let marcasDisponiveis = new Set();
 let lastDataHash = '';
 let sessionToken = null;
 
-console.log('🚀 Iniciando aplicação...');
-console.log('📍 API URL:', API_URL);
+// LOG APENAS NO INÍCIO
+console.log('🚀 Tabela de Preços iniciada');
 
 document.addEventListener('DOMContentLoaded', () => {
     verificarAutenticacao();
@@ -173,12 +173,10 @@ function verificarAutenticacao() {
     }
 
     if (!sessionToken) {
-        console.log('❌ Sem token de sessão');
         mostrarTelaAcessoNegado();
         return;
     }
 
-    console.log('✅ Token encontrado');
     inicializarApp();
 }
 
@@ -196,7 +194,6 @@ function mostrarTelaAcessoNegado(mensagem = 'Acesso negado') {
 }
 
 function inicializarApp() {
-    console.log('🔄 Inicializando aplicação...');
     checkServerStatus();
     setInterval(checkServerStatus, 15000); // A cada 15 segundos
     startPolling();
@@ -208,10 +205,8 @@ window.toggleForm = function() {
 
 async function checkServerStatus() {
     try {
-        console.log('🔍 Verificando servidor...');
-        
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 segundos
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
 
         const response = await fetch(`${API_URL}/precos`, {
             method: 'HEAD',
@@ -222,7 +217,6 @@ async function checkServerStatus() {
         clearTimeout(timeoutId);
 
         if (response.status === 401) {
-            console.log('❌ Sessão expirou');
             sessionStorage.removeItem('tabelaPrecosSession');
             mostrarTelaAcessoNegado('Sua sessão expirou');
             return false;
@@ -231,17 +225,20 @@ async function checkServerStatus() {
         const wasOffline = !isOnline;
         isOnline = response.ok;
         
-        console.log(isOnline ? '✅ Servidor ONLINE' : '❌ Servidor OFFLINE');
-        updateConnectionStatus();
-        
+        // LOG APENAS QUANDO MUDA DE STATUS
         if (wasOffline && isOnline) {
-            console.log('🔄 Sincronizando dados...');
+            console.log('✅ Servidor ONLINE');
             await loadPrecos();
+        } else if (!wasOffline && !isOnline) {
+            console.log('❌ Servidor OFFLINE');
         }
-
+        
+        updateConnectionStatus();
         return isOnline;
     } catch (error) {
-        console.log('❌ Erro ao verificar servidor:', error.message);
+        if (isOnline) {
+            console.log('❌ Erro de conexão:', error.message);
+        }
         isOnline = false;
         updateConnectionStatus();
         return false;
@@ -256,43 +253,37 @@ function updateConnectionStatus() {
 }
 
 async function loadPrecos() {
-    if (!isOnline) {
-        console.log('⚠️ Offline - não carregando dados');
-        return;
-    }
+    if (!isOnline) return;
 
     try {
-        console.log('📥 Carregando preços...');
         const response = await fetch(`${API_URL}/precos`, {
             headers: { 'X-Session-Token': sessionToken }
         });
 
         if (response.status === 401) {
-            console.log('❌ Sessão expirou durante carregamento');
             sessionStorage.removeItem('tabelaPrecosSession');
             mostrarTelaAcessoNegado('Sua sessão expirou');
             return;
         }
 
-        if (!response.ok) {
-            console.log('❌ Erro ao carregar:', response.status);
-            return;
-        }
+        if (!response.ok) return;
 
         const data = await response.json();
-        console.log(`✅ ${data.length} preços carregados`);
-        
         const newHash = JSON.stringify(data.map(p => p.id));
 
         if (newHash !== lastDataHash) {
             precos = data.map(item => ({ ...item, descricao: item.descricao.toUpperCase() }));
             lastDataHash = newHash;
+            
+            // LOG APENAS NA PRIMEIRA VEZ OU QUANDO MUDAR
+            console.log(`📊 ${data.length} preços carregados`);
+            
             atualizarMarcasDisponiveis();
             renderMarcasFilter();
             filterPrecos();
         }
     } catch (error) {
-        console.log('❌ Erro ao carregar preços:', error.message);
+        // Silencioso - não loga
     }
 }
 
@@ -300,7 +291,7 @@ function startPolling() {
     loadPrecos();
     setInterval(() => {
         if (isOnline) loadPrecos();
-    }, 8000); // A cada 8 segundos
+    }, 10000); // A cada 10 segundos
 }
 
 function atualizarMarcasDisponiveis() {
@@ -366,7 +357,6 @@ async function syncWithServer(formData, editId = null, tempId = null) {
         renderMarcasFilter();
         filterPrecos();
     } catch (error) {
-        console.log('❌ Erro ao sincronizar:', error.message);
         if (!editId) {
             precos = precos.filter(p => p.id !== tempId);
             filterPrecos();
@@ -411,7 +401,6 @@ window.deletePreco = async function(id) {
 
             if (!response.ok) throw new Error('Erro ao deletar');
         } catch (error) {
-            console.log('❌ Erro ao deletar:', error.message);
             if (deletedPreco) {
                 precos.push(deletedPreco);
                 atualizarMarcasDisponiveis();
