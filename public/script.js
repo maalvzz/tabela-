@@ -180,7 +180,7 @@ function verificarAutenticacao() {
     inicializarApp();
 }
 
-function mostrarTelaAcessoNegado(mensagem = 'Acesso negado') {
+function mostrarTelaAcessoNegado(mensagem = 'NÃO AUTORIZADO') {
     document.body.innerHTML = `
         <div style="
             display: flex;
@@ -199,7 +199,7 @@ function mostrarTelaAcessoNegado(mensagem = 'Acesso negado') {
             </h1>
 
             <p style="color: var(--text-secondary); margin-bottom: 2rem;">
-                Você precisa estar autenticado no Portal.
+                Somente usuários autenticados podem acessar esta área.
             </p>
 
             <a href="${PORTAL_URL}" style="
