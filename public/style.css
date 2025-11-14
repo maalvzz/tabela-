@@ -54,7 +54,9 @@ body {
     line-height: 1.6;
 }
 
-/* SPLASH SCREEN - MUITO PRÓXIMO */
+/* ============================================
+   SPLASH SCREEN - LOGO COLADA NO TÍTULO
+   ============================================ */
 .splash-screen {
     position: fixed;
     top: 0;
@@ -73,7 +75,8 @@ body {
 .splash-logo {
     width: 280px;
     max-width: 80%;
-    margin-bottom: 0.3rem; /* BEM PRÓXIMO */
+    margin-bottom: 0; /* SEM ESPAÇO */
+    padding-bottom: 0; /* SEM PADDING */
     animation: logoFloat 2s ease-in-out;
 }
 
@@ -82,7 +85,8 @@ body {
     font-weight: 700;
     color: var(--text-primary);
     letter-spacing: -0.5px;
-    margin-top: 0; /* SEM MARGEM */
+    margin-top: -10px; /* PUXAR PARA CIMA */
+    padding-top: 0; /* SEM PADDING */
     animation: titleFadeIn 1s ease 0.5s both;
 }
 
@@ -430,7 +434,7 @@ tbody tr:hover { background: var(--table-hover); }
     .header { flex-direction: column; align-items: flex-start; }
     h1 { font-size: 1.5rem; }
     .splash-logo { width: 220px; }
-    .splash-title { font-size: 1.3rem; }
+    .splash-title { font-size: 1.3rem; margin-top: -8px; }
     table { font-size: 0.85rem; }
     th, td { padding: 10px 8px; }
     button { padding: 10px 16px; font-size: 0.9rem; }
