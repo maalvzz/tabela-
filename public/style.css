@@ -52,8 +52,6 @@ body {
     background: var(--bg-secondary);
     color: var(--text-primary);
     line-height: 1.6;
-    /* Força scrollbar a aparecer sempre, evitando movimentação */
-    overflow-y: scroll;
 }
 
 /* ============================================
@@ -79,27 +77,21 @@ body {
     max-width: 80%;
     margin-bottom: 0;
     padding-bottom: 0;
-    /* Remove qualquer fundo da imagem */
-    background: transparent;
-    /* Garante renderização limpa */
-    image-rendering: crisp-edges;
-    -webkit-backface-visibility: hidden;
-    backface-visibility: hidden;
     /* Animação apenas de opacidade - sem movimento */
     opacity: 0;
     animation: smoothFadeIn 1.5s ease-out forwards;
 }
 
 .splash-title {
-    font-size: 2rem;
+    font-size: 1.6rem;
     font-weight: 700;
     color: var(--text-primary);
     letter-spacing: -0.5px;
-    margin: 0;
-    padding: 0;
+    margin-top: -10px;
+    padding-top: 0;
     /* Animação apenas de opacidade - sem movimento */
     opacity: 0;
-    animation: smoothFadeIn 1.5s ease-out forwards;
+    animation: smoothFadeIn 1.5s ease-out 0.3s forwards;
 }
 
 /* Animação suave apenas com fade - SEM deslocamento */
@@ -340,21 +332,10 @@ tbody tr:hover { background: var(--table-hover); }
     border-radius: 10px;
     font-weight: 500;
     font-size: 0.95rem;
-    z-index: 999999;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    z-index: 9999;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     border: 1px solid;
     display: none;
-    /* Garante que a mensagem fique nítida acima do blur */
-    isolation: isolate;
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
-    transform: translateZ(999px);
-    will-change: transform;
-    /* Força renderização sólida */
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    /* Força novo contexto de empilhamento */
-    position: fixed !important;
 }
 
 .status-message.show { display: block; animation: slideIn 0.3s ease; }
@@ -364,50 +345,34 @@ tbody tr:hover { background: var(--table-hover); }
     to { opacity: 1; transform: translateX(0); }
 }
 
-.status-message.success { 
-    background: #D1FAE5; 
-    color: #065F46; 
-    border-color: #A7F3D0; 
-    /* Garante opacidade total */
-    opacity: 1 !important;
-    background-color: #D1FAE5 !important;
-}
+.status-message.success { background: #D1FAE5; color: #065F46; border-color: #A7F3D0; }
+.status-message.error { background: #FEE2E2; color: #991B1B; border-color: #FECACA; }
 
-.status-message.error { 
-    background: #FEE2E2; 
-    color: #991B1B; 
-    border-color: #FECACA; 
-    /* Garante opacidade total */
-    opacity: 1 !important;
-    background-color: #FEE2E2 !important;
-}
-
-/* MENSAGEM FLUTUANTE - SEMPRE VISÍVEL */
+/* FLOATING MESSAGE - Mesma formatação do status-message, mas aparece acima do modal */
 .floating-message {
     position: fixed;
     top: 24px;
     right: 24px;
     padding: 14px 20px;
     border-radius: 10px;
-    font-weight: 600;
+    font-weight: 500;
     font-size: 0.95rem;
     z-index: 9999999;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-    border: 2px solid;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border: 1px solid;
     animation: slideIn 0.3s ease;
-    pointer-events: auto;
 }
 
-.floating-message.success {
-    background: #D1FAE5;
-    color: #065F46;
-    border-color: #10B981;
+.floating-message.success { 
+    background: #D1FAE5; 
+    color: #065F46; 
+    border-color: #A7F3D0; 
 }
 
-.floating-message.error {
-    background: #FEE2E2;
-    color: #991B1B;
-    border-color: #EF4444;
+.floating-message.error { 
+    background: #FEE2E2; 
+    color: #991B1B; 
+    border-color: #FECACA; 
 }
 
 @keyframes slideOut {
