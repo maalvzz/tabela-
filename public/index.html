@@ -9,7 +9,6 @@
 <body>
     <!-- Splash Screen -->
     <div class="splash-screen" id="splashScreen">
-        <img id="splashLogo" class="splash-logo" alt="Logo I.R. Comércio">
         <h1 class="splash-title">Tabela de Preços</h1>
     </div>
 
@@ -53,38 +52,11 @@
     </div>
 
     <script>
-        // Detectar tema e definir logo
-        const isDarkMode = !window.matchMedia || window.matchMedia('(prefers-color-scheme: dark)').matches;
-        const splashLogo = document.getElementById('splashLogo');
-        
-        if (isDarkMode) {
-            splashLogo.src = 'I.R.-COMERCIO-E-MATERIAIS-ELETRICOS-LTDA-ESCURO.png';
-        } else {
-            splashLogo.src = 'I.R.-COMERCIO-E-MATERIAIS-ELETRICOS-LTDA-BRANCO.png';
-        }
-
-        // Tratamento de erro na logo
-        splashLogo.onerror = function() {
-            console.log('❌ Erro ao carregar logo');
-            this.style.display = 'none';
-        };
-
         // Esconder splash após 3 segundos
         setTimeout(() => {
             const splash = document.getElementById('splashScreen');
             if (splash) splash.style.display = 'none';
         }, 3000);
-
-        // Listener para mudanças de tema
-        if (window.matchMedia) {
-            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
-                if (splashLogo) {
-                    splashLogo.src = e.matches 
-                        ? 'I.R.-COMERCIO-E-MATERIAIS-ELETRICOS-LTDA-ESCURO.png'
-                        : 'I.R.-COMERCIO-E-MATERIAIS-ELETRICOS-LTDA-BRANCO.png';
-                }
-            });
-        }
     </script>
     <script src="script.js"></script>
 </body>
