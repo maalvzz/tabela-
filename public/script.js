@@ -108,8 +108,6 @@ function showFormModal(editingId = null) {
     const form = document.getElementById('modalPrecoForm');
     const cancelBtn = document.getElementById('modalCancelFormBtn');
     const descricaoField = document.getElementById('modalDescricao');
-    const editId = document.getElementById('modalEditId').value;
-    const isEditing = editId !== '';
 
     descricaoField.addEventListener('input', (e) => {
         const start = e.target.selectionStart;
