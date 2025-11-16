@@ -382,6 +382,41 @@ tbody tr:hover { background: var(--table-hover); }
     background-color: #FEE2E2 !important;
 }
 
+/* MENSAGEM FLUTUANTE - SEMPRE VISÍVEL */
+.floating-message {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    padding: 14px 20px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    z-index: 9999999;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    border: 2px solid;
+    animation: slideIn 0.3s ease;
+    pointer-events: auto;
+}
+
+.floating-message.success {
+    background: #D1FAE5;
+    color: #065F46;
+    border-color: #10B981;
+}
+
+.floating-message.error {
+    background: #FEE2E2;
+    color: #991B1B;
+    border-color: #EF4444;
+}
+
+@keyframes slideOut {
+    to {
+        opacity: 0;
+        transform: translateX(400px);
+    }
+}
+
 .modal-overlay {
     position: fixed;
     top: 0;
