@@ -52,6 +52,8 @@ body {
     background: var(--bg-secondary);
     color: var(--text-primary);
     line-height: 1.6;
+    /* Força scrollbar a aparecer sempre, evitando movimentação */
+    overflow-y: scroll;
 }
 
 /* ============================================
