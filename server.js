@@ -29,11 +29,12 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// REGISTRO DE ACESSOS (somente IPs)
+// REGISTRO DE ACESSOS SILENCIOSO
 const logFilePath = path.join(__dirname, 'acessos.log');
+let accessCount = 0;
+let uniqueIPs = new Set();
 
 function registrarAcesso(req, res, next) {
-    // Apenas registrar, sem console.log
     const xForwardedFor = req.headers['x-forwarded-for'];
     const clientIP = xForwardedFor
         ? xForwardedFor.split(',')[0].trim()
@@ -42,11 +43,26 @@ function registrarAcesso(req, res, next) {
     const cleanIP = clientIP.replace('::ffff:', '');
     const logEntry = `[${new Date().toISOString()}] ${cleanIP} - ${req.method} ${req.path}\n`;
 
+    // Salva no arquivo (silencioso)
     fs.appendFile(logFilePath, logEntry, () => {});
+    
+    // Conta acessos (sem mostrar)
+    accessCount++;
+    uniqueIPs.add(cleanIP);
+    
     next();
 }
 
 app.use(registrarAcesso);
+
+// Relatório periódico (opcional - a cada 1 hora)
+setInterval(() => {
+    if (accessCount > 0) {
+        console.log(`📊 Última hora: ${accessCount} requisições de ${uniqueIPs.size} IPs únicos`);
+        accessCount = 0;
+        uniqueIPs.clear();
+    }
+}, 3600000); // 1 hora
 
 // AUTENTICAÇÃO
 const PORTAL_URL = process.env.PORTAL_URL || 'https://ir-comercio-portal-zcan.onrender.com';
@@ -280,7 +296,6 @@ app.use((req, res) => {
 
 // TRATAMENTO DE ERROS
 app.use((error, req, res, next) => {
-    console.error('Erro:', error.message);
     res.status(500).json({
         error: 'Erro interno do servidor'
     });
@@ -290,7 +305,8 @@ app.use((error, req, res, next) => {
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`✅ Servidor rodando na porta ${PORT}`);
     console.log(`✅ Database: Conectado`);
-    console.log(`✅ Autenticação: Ativa\n`);
+    console.log(`✅ Autenticação: Ativa`);
+    console.log(`📝 Logs salvos em: acessos.log\n`);
 });
 
 // Verificar pasta public
