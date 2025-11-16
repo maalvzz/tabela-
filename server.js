@@ -290,36 +290,10 @@ app.use((error, req, res, next) => {
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`✅ Servidor rodando na porta ${PORT}`);
     console.log(`✅ Database: Conectado`);
-    console.log(`✅ Autenticação: Ativa`);
-    console.log(`🔄 Keep-Alive: Ativado (ping a cada 14 minutos)\n`);
+    console.log(`✅ Autenticação: Ativa\n`);
 });
 
 // Verificar pasta public
 if (!fs.existsSync(publicPath)) {
     console.error('⚠️  Pasta public/ não encontrada!');
 }
-
-// ====================================================================
-// 🚀 KEEP-ALIVE: MANTÉM O SERVIDOR ACORDADO NO RENDER FREE TIER
-// ====================================================================
-// Isso evita que o Render suspenda a aplicação após 15 minutos de inatividade
-// Faz um ping interno a cada 14 minutos para manter o servidor ativo
-
-const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
-
-setTimeout(() => {
-    setInterval(async () => {
-        try {
-            const response = await fetch(`${BASE_URL}/health`);
-            const data = await response.json();
-            
-            if (data.status === 'healthy') {
-                console.log('✅ Keep-alive ping: OK');
-            } else {
-                console.log('⚠️ Keep-alive ping: Unhealthy');
-            }
-        } catch (error) {
-            console.log('⚠️ Keep-alive ping failed:', error.message);
-        }
-    }, 14 * 60 * 1000); // 14 minutos
-}, 30000); // Aguarda 30 segundos após inicialização para começar
