@@ -105,23 +105,13 @@ function showFormModal(editingId = null) {
     const modal = document.getElementById('formModal');
     const form = document.getElementById('modalPrecoForm');
     const cancelBtn = document.getElementById('modalCancelFormBtn');
-    
-    // Converter para MAIÚSCULAS automaticamente
-    const marcaField = document.getElementById('modalMarca');
-    const codigoField = document.getElementById('modalCodigo');
     const descricaoField = document.getElementById('modalDescricao');
 
-    // Função para forçar maiúsculas mantendo a posição do cursor
-    const forceUpperCase = (e) => {
+    descricaoField.addEventListener('input', (e) => {
         const start = e.target.selectionStart;
-        const end = e.target.selectionEnd;
         e.target.value = e.target.value.toUpperCase();
-        e.target.setSelectionRange(start, end);
-    };
-
-    marcaField.addEventListener('input', forceUpperCase);
-    codigoField.addEventListener('input', forceUpperCase);
-    descricaoField.addEventListener('input', forceUpperCase);
+        e.target.setSelectionRange(start, start);
+    });
 
     const closeModal = () => {
         modal.style.animation = 'fadeOut 0.2s ease forwards';
@@ -132,22 +122,17 @@ function showFormModal(editingId = null) {
         e.preventDefault();
 
         const formData = {
-            marca: document.getElementById('modalMarca').value.trim().toUpperCase(),
-            codigo: document.getElementById('modalCodigo').value.trim().toUpperCase(),
+            marca: document.getElementById('modalMarca').value.trim(),
+            codigo: document.getElementById('modalCodigo').value.trim(),
             preco: parseFloat(document.getElementById('modalPreco').value),
             descricao: document.getElementById('modalDescricao').value.trim().toUpperCase()
         };
 
         const editId = document.getElementById('modalEditId').value;
-        
-        // VALIDAÇÃO: Verificar se o código já existe
-        const codigoDuplicado = precos.find(p => 
-            p.codigo.toUpperCase() === formData.codigo.toUpperCase() && 
-            p.id !== editId
-        );
+        const codigoDuplicado = precos.find(p => p.codigo.toLowerCase() === formData.codigo.toLowerCase() && p.id !== editId);
 
         if (codigoDuplicado) {
-            showMessage(`❌ Código "${formData.codigo}" já existe!`, 'error');
+            showMessage(`Código "${formData.codigo}" já existe`, 'error');
             return;
         }
 
@@ -233,17 +218,6 @@ function mostrarTelaAcessoNegado(mensagem = 'NÃO AUTORIZADO') {
 
 
 function inicializarApp() {
-    // Adicionar conversão automática para MAIÚSCULAS no campo de pesquisa
-    const searchField = document.getElementById('search');
-    if (searchField) {
-        searchField.addEventListener('input', (e) => {
-            const start = e.target.selectionStart;
-            const end = e.target.selectionEnd;
-            e.target.value = e.target.value.toUpperCase();
-            e.target.setSelectionRange(start, end);
-        });
-    }
-
     checkServerStatus();
     setInterval(checkServerStatus, 15000); // A cada 15 segundos
     startPolling();
@@ -550,12 +524,12 @@ function showMessage(message, type) {
     const oldMessages = document.querySelectorAll('.floating-message');
     oldMessages.forEach(msg => msg.remove());
     
-    // Cria nova mensagem flutuante
+    // Cria nova mensagem flutuante (mesma aparência do status-message)
     const messageDiv = document.createElement('div');
     messageDiv.className = `floating-message ${type}`;
     messageDiv.textContent = message;
     
-    // Adiciona no body (não no statusMessage do HTML)
+    // Adiciona no body para aparecer acima do modal
     document.body.appendChild(messageDiv);
     
     // Remove após 3 segundos
