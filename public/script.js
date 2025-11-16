@@ -546,9 +546,21 @@ function renderPrecos(precosToRender) {
 }
 
 function showMessage(message, type) {
-    const messageDiv = document.getElementById('statusMessage');
-    if (!messageDiv) return;
+    // Remove mensagens antigas
+    const oldMessages = document.querySelectorAll('.floating-message');
+    oldMessages.forEach(msg => msg.remove());
+    
+    // Cria nova mensagem flutuante
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `floating-message ${type}`;
     messageDiv.textContent = message;
-    messageDiv.className = `status-message ${type} show`;
-    setTimeout(() => { messageDiv.className = `status-message ${type}`; }, 3000);
+    
+    // Adiciona no body (não no statusMessage do HTML)
+    document.body.appendChild(messageDiv);
+    
+    // Remove após 3 segundos
+    setTimeout(() => {
+        messageDiv.style.animation = 'slideOut 0.3s ease forwards';
+        setTimeout(() => messageDiv.remove(), 300);
+    }, 3000);
 }
