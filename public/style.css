@@ -341,7 +341,7 @@ tbody tr:hover { background: var(--table-hover); }
     font-weight: 500;
     font-size: 0.95rem;
     z-index: 99999;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
     border: 1px solid;
     display: none;
     /* Garante que a mensagem fique nítida acima do blur */
@@ -350,6 +350,9 @@ tbody tr:hover { background: var(--table-hover); }
     backdrop-filter: none;
     transform: translateZ(0);
     will-change: transform;
+    /* Força renderização sólida */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 .status-message.show { display: block; animation: slideIn 0.3s ease; }
@@ -359,8 +362,23 @@ tbody tr:hover { background: var(--table-hover); }
     to { opacity: 1; transform: translateX(0); }
 }
 
-.status-message.success { background: #D1FAE5; color: #065F46; border-color: #A7F3D0; }
-.status-message.error { background: #FEE2E2; color: #991B1B; border-color: #FECACA; }
+.status-message.success { 
+    background: #D1FAE5; 
+    color: #065F46; 
+    border-color: #A7F3D0; 
+    /* Garante opacidade total */
+    opacity: 1 !important;
+    background-color: #D1FAE5 !important;
+}
+
+.status-message.error { 
+    background: #FEE2E2; 
+    color: #991B1B; 
+    border-color: #FECACA; 
+    /* Garante opacidade total */
+    opacity: 1 !important;
+    background-color: #FEE2E2 !important;
+}
 
 .modal-overlay {
     position: fixed;
