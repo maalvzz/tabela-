@@ -332,7 +332,7 @@ tbody tr:hover { background: var(--table-hover); }
     border-radius: 10px;
     font-weight: 500;
     font-size: 0.95rem;
-    z-index: 9999;
+    z-index: 99999;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     border: 1px solid;
     display: none;
