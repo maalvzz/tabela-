@@ -340,7 +340,7 @@ tbody tr:hover { background: var(--table-hover); }
     border-radius: 10px;
     font-weight: 500;
     font-size: 0.95rem;
-    z-index: 99999;
+    z-index: 999999;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
     border: 1px solid;
     display: none;
@@ -348,11 +348,13 @@ tbody tr:hover { background: var(--table-hover); }
     isolation: isolate;
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
-    transform: translateZ(0);
+    transform: translateZ(999px);
     will-change: transform;
     /* Força renderização sólida */
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    /* Força novo contexto de empilhamento */
+    position: fixed !important;
 }
 
 .status-message.show { display: block; animation: slideIn 0.3s ease; }
