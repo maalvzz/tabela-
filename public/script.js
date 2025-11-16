@@ -49,7 +49,9 @@ function showConfirm(message, options = {}) {
 
         confirmBtn.addEventListener('click', () => closeModal(true));
         cancelBtn.addEventListener('click', () => closeModal(false));
-        modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(false); });
+        
+        // REMOVIDO: Não fecha mais ao clicar fora do modal de confirmação
+        // modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(false); });
 
         if (!document.querySelector('#modalAnimations')) {
             const style = document.createElement('style');
@@ -106,6 +108,8 @@ function showFormModal(editingId = null) {
     const form = document.getElementById('modalPrecoForm');
     const cancelBtn = document.getElementById('modalCancelFormBtn');
     const descricaoField = document.getElementById('modalDescricao');
+    const editId = document.getElementById('modalEditId').value;
+    const isEditing = editId !== '';
 
     descricaoField.addEventListener('input', (e) => {
         const start = e.target.selectionStart;
@@ -155,8 +159,15 @@ function showFormModal(editingId = null) {
         syncWithServer(formData, editId, tempId);
     });
 
-    cancelBtn.addEventListener('click', closeModal);
-    modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+    // Botão Cancelar - mostra mensagem e fecha
+    cancelBtn.addEventListener('click', () => {
+        showMessage(isEditing ? 'Atualização cancelada' : 'Registro cancelado', 'error');
+        closeModal();
+    });
+    
+    // REMOVIDO: Não fecha mais ao clicar fora do modal
+    // modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+    
     setTimeout(() => document.getElementById('modalMarca').focus(), 100);
 }
 
