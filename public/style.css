@@ -77,6 +77,12 @@ body {
     max-width: 80%;
     margin-bottom: 0;
     padding-bottom: 0;
+    /* Remove qualquer fundo da imagem */
+    background: transparent;
+    /* Garante renderização limpa */
+    image-rendering: crisp-edges;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
     /* Animação apenas de opacidade - sem movimento */
     opacity: 0;
     animation: smoothFadeIn 1.5s ease-out forwards;
