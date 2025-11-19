@@ -74,16 +74,6 @@ body {
     animation: fadeOut 0.5s ease 2.5s forwards;
 }
 
-.splash-logo {
-    width: 280px;
-    max-width: 80%;
-    margin-bottom: 0;
-    padding-bottom: 0;
-    /* Animação apenas de opacidade - sem movimento */
-    opacity: 0;
-    animation: smoothFadeIn 1.5s ease-out forwards;
-}
-
 .splash-title {
     font-size: 1.6rem;
     font-weight: 700;
